@@ -1,0 +1,70 @@
+<!--facility/templates/facility/show.html-->
+{% extends "base/show.html" %}
+{% load static %}
+{% load render_table from django_tables2 %}
+{% load my_filters %}
+
+{% block title_text %}Facility Details{% endblock title_text %}
+
+{% block cards %}
+<div id="show">
+    {% block object_details %}
+    <!-- Display basic facility information -->
+    <section class="card">
+        <h3>Facility Information</h3>
+        <dl class="row">
+            <dt class="col-sm-3">Location:</dt>
+            <dd class="col-sm-9">{{ facility.location }}</dd>
+
+            <dt class="col-sm-3">Capacity:</dt>
+            <dd class="col-sm-9">{{ facility.capacity }}</dd>
+
+            <dt class="col-sm-3">Description:</dt>
+            <dd class="col-sm-9">{{ facility.description }}</dd>
+        </dl>
+    </section>
+    {% endblock object_details %}
+
+    {% block related_tables %}
+    <section class="card mt-4">
+        <h2>
+            Departments
+            <a href="{% url 'facilities:departments:new' facility_slug=facility.slug %}">
+                <i class="fas fa-plus"></i>
+            </a>
+        </h2>
+        {% render_table departments_table %}
+    </section>
+
+    <section class="card mt-4">
+        <h2>
+            Quarters
+            <a href="{% url 'facilities:quarters:new' facility_slug=facility.slug  %}">
+                <i class="fas fa-plus"></i>
+            </a>
+        </h2>
+        {% render_table quarters_table %}
+    </section>
+
+    <section class="card mt-4">
+        <h2>
+            Faculty
+            <a href="{% url 'facilities:faculty:new' facility_slug=facility.slug %}">
+                <i class="fas fa-plus"></i>
+            </a>
+        </h2>
+        {% render_table faculty_table %}
+    </section>
+
+    <section class="card mt-4">
+        <h2>
+            Facility Enrollments
+            <a href="{% url 'facilities:enrollments:new' facility_slug=facility.slug %}">
+                <i class="fas fa-plus"></i>
+            </a>
+        </h2>
+        {% render_table facility_enrollment_table %}
+    </section>
+    {% endblock related_tables %}
+</div>
+{% endblock cards %}

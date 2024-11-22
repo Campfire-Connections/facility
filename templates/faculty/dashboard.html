@@ -1,0 +1,31 @@
+{% extends 'auth/dashboard.html' %}
+
+{% load my_filters %}
+
+{% block title_text %}Faculty Dashboard{% endblock %}
+
+{% block menu %}
+{{ block.super}}
+{% endblock menu %}
+
+{% block user_stat_1 %}
+{% include 'partials/user_stat.html' with url='#' url_class='count first' title='Classes' value_class='classes count' value=user_faculty_class_count %}
+{% endblock user_stat_1 %}
+
+{%block cards %}
+    {% for key, item in dashboard_items.items %}
+    <section class="card">
+        <h2>{{ key|title|spacify }}</h2>
+        {% if item.data %}
+            <ul>
+                {% for i in item.data %}
+                <li>{{ i }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No {{ key | pluralize }}.</p>
+        {% endif %}
+    </section>
+    {% endfor %}
+
+{% endblock cards %}
