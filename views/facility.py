@@ -15,22 +15,20 @@ from django_tables2 import MultiTableMixin, SingleTableView
 from django_tables2.config import RequestConfig
 
 from organization.models.organization import Organization
-from enrollment.models.organization import OrganizationCourse
-from enrollment.models.temporal import Week, Period
 from enrollment.models.facility import FacilityEnrollment
 from enrollment.tables.facility import FacilityEnrollmentTable
 from course.models.facility_class import FacilityClass
 from course.tables.facility_class import FacilityClassTable
 from user.models import User
+from core.views.base import BaseManageView
 from ..models.facility import Facility
 from ..models.department import Department
-from ..models.quarters import Quarters, QuartersType
+from ..models.quarters import Quarters
 from ..forms.facility import FacilityForm
 from ..tables.facility import FacilityTable
 from ..tables.department import DepartmentTable
 from ..tables.quarters import QuartersTable
 from ..tables.faculty import FacultyTable
-
 
 class IndexView(SingleTableView):
     model = Facility
@@ -73,119 +71,45 @@ class IndexByOrganizationView(_ListView):
         return context
 
 
-class ManageView(
-    LoginRequiredMixin, UserPassesTestMixin, MultiTableMixin, TemplateView
-):
+class ManageView(LoginRequiredMixin, UserPassesTestMixin, BaseManageView):
     template_name = "facility/manage.html"
 
-    def get_tables(self):
-        """
-        Retrieves and configures tables for departments, facility classes, and facility enrollments
-        associated with a specific facility. This function constructs querysets, builds tables, and
-        applies pagination and sorting configurations.
-
-        Args:
-            self: The instance of the class.
-
-        Returns:
-            list: A list containing the configured tables for departments, facility classes, and 
-            facility enrollments.
-        """
-
-        facility = self.get_facility()
-
-        # Construct querystrings
-        departments_qs = Department.objects.filter(facility=facility)
-        facility_classes_qs = FacilityClass.objects.filter(
-            facility_enrollment__facility=facility
-        )
-        facility_enrollments_qs = FacilityEnrollment.objects.filter(facility=facility)
-
-        # Build tables with querystrings
-        department_table = DepartmentTable(departments_qs)
-        facility_class_table = FacilityClassTable(facility_classes_qs)
-        facility_enrollment_table = FacilityEnrollmentTable(
-            facility_enrollments_qs, user=self.request.user
-        )
-
-        # Configure tables with pagination and sorting
-        RequestConfig(self.request, paginate={"per_page": 6}).configure(
-            facility_class_table
-        )
-        RequestConfig(self.request, paginate={"per_page": 6}).configure(
-            department_table
-        )
-        RequestConfig(self.request, paginate={"per_page": 6}).configure(
-            facility_enrollment_table
-        )
-
-        return [
-            department_table,
-            facility_class_table,
-            facility_enrollment_table,
-        ]
-
-    def get_context_data(self, **kwargs):
-        """
-        Constructs and returns the context data for rendering a template, including various tables 
-        and related entities for a specific facility. This function enhances the context with 
-        additional information such as departments, classes, enrollments, and other related data.
-
-        Args:
-            self: The instance of the class.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            dict: A dictionary containing the context data for the template, including tables with 
-                names and various related entities.
-        """
-
-        context = super().get_context_data(**kwargs)
-        facility = self.get_facility()
-
-        tables_with_names = [
-            {
-                "table": table,
-                "name": table.Meta.model._meta.verbose_name_plural,
-                "create_url": table.get_url(
-                    "add", context={"facility_slug": facility.slug}
-                ),
-                "icon": getattr(table, "add_icon", None),
-            }
-            for table in self.get_tables()
-        ]
-        context.update(
-            {
-                "tables_with_names": tables_with_names,
-                "facility": facility,
-                # "departments": Department.objects.filter(facility=facility),
-                # "quarters": Quarters.objects.filter(facility=facility),
-                # "classes": FacilityClass.objects.filter(
-                #     facility_enrollment__facility=facility
-                # ),
-                # "enrollments": FacilityEnrollment.objects.filter(facility=facility),
-                # "courses": OrganizationCourse.objects.filter(
-                #     organization_enrollment__organization=facility.organization
-                # ),
-                # "weeks": Week.objects.filter(facility_enrollment__facility=facility),
-                # "periods": Period.objects.filter(
-                #     week__facility_enrollment__facility=facility
-                # ),
-            }
-        )
-
-        return context
-
     def get_facility(self):
+        """
+        Get the facility associated with the current user.
+        """
         user = self.request.user
         profile = user.facultyprofile
         return get_object_or_404(Facility, id=profile.facility_id)
 
+    def get_tables_config(self):
+        """
+        Define tables for the manage view with their querysets and pagination.
+        """
+        facility = self.get_facility()
+        return {
+            "departments": {
+                "class": DepartmentTable,
+                "queryset": Department.objects.filter(facility=facility),
+                "paginate_by": 6,
+            },
+            "facility_classes": {
+                "class": FacilityClassTable,
+                "queryset": FacilityClass.objects.filter(facility_enrollment__facility=facility),
+                "paginate_by": 6,
+            },
+            "facility_enrollments": {
+                "class": FacilityEnrollmentTable,
+                "queryset": FacilityEnrollment.objects.filter(facility=facility),
+                "paginate_by": 6,
+            },
+        }
+
     def test_func(self):
-        # Check if the user is a faculty member with admin privileges
+        """
+        Check if the user is a faculty member with admin privileges.
+        """
         return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
-
-
 class ShowView(_DetailView):
     model = Facility
     template_name = "facility/show.html"

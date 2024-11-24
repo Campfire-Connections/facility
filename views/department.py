@@ -13,8 +13,8 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django_tables2 import SingleTableMixin
 
-from pages.mixins.forms import SuccessMessageMixin, FormValidMixin
-from pages.mixins.models import SoftDeleteMixin
+from core.mixins.forms import SuccessMessageMixin, FormValidMixin
+from core.mixins.models import SoftDeleteMixin
 
 from ..models.department import Department
 from ..models.facility import Facility

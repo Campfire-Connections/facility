@@ -3,8 +3,8 @@
 from django.db import models
 from django.urls import reverse
 
-from pages.mixins import models as mixins
-from pages.mixins import settings as stgs
+from core.mixins import models as mixins
+from core.mixins import settings as stgs
 
 
 class Department(
