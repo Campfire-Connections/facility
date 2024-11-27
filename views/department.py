@@ -1,63 +1,46 @@
 # facility/views/department.py
 
-from django.views.generic import (
-    ListView as _ListView,
-    DetailView as _DetailView,
-    CreateView as _CreateView,
-    UpdateView as _UpdateView,
-    DeleteView as _DeleteView,
-    TemplateView,
-)
-from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy, reverse
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django_tables2 import SingleTableMixin
+from django.shortcuts import get_object_or_404
 
-from core.mixins.forms import SuccessMessageMixin, FormValidMixin
-from core.mixins.models import SoftDeleteMixin
+from core.views.base import (
+    BaseIndexByFilterTableView,
+    BaseCreateView,
+    BaseDeleteView,
+    BaseDetailView,
+    BaseTableListView,
+    BaseUpdateView,
+)
 
-from ..models.department import Department
 from ..models.facility import Facility
+from ..models.department import Department
+from ..forms.department import DepartmentForm
 from ..tables.department import DepartmentTable
 
 
-class IndexView(_ListView):
+class IndexView(BaseTableListView):
     model = Department
     template_name = "department/list.html"
-    context_object_name = "departments"
-
-
-class IndexByFacilityView(SingleTableMixin, TemplateView):
-    model = Department
     table_class = DepartmentTable
-    template_name = "department/list.html"
     context_object_name = "departments"
 
-    def get_queryset(self):
-        """Return departments associated with the selected facility."""
-        self.facility = self.get_facility()
-        return Department.objects.filter(facility=self.facility)
 
-    def get_context_data(self, **kwargs):
-        """Add facility to context for template usage."""
-        context = super().get_context_data(**kwargs)
-        context["facility"] = self.facility
-        return context
+class IndexByFacilityView(BaseIndexByFilterTableView):
+    model = Department
+    template_name = "department/list.html"
+    context_object_name = "departments"
+    table_class = DepartmentTable
+    lookup_keys = ["facility_slug", "facility_pk"]
+    filter_field = "facility"
+    filter_model = Facility
+    context_object_name_for_filter = "facility"
 
-    def get_facility(self):
-        """Helper method to retrieve the facility by ID or slug."""
-        facility_id = self.kwargs.get("facility_id")
-        facility_slug = self.kwargs.get("facility_slug")
-
-        if facility_id:
-            return get_object_or_404(Facility, pk=facility_id)
-        return get_object_or_404(Facility, slug=facility_slug)
-
-
-class ShowView(_DetailView):
+class ShowView(BaseDetailView):
     model = Department
     template_name = "department/show.html"
     context_object_name = "department"
+    slug_field = "slug"
+    slug_url_kwarg = "department_slug"
 
     def get_object(self):
         department_id = self.kwargs.get("department_id")
@@ -68,20 +51,17 @@ class ShowView(_DetailView):
             return get_object_or_404(Department, slug=department_slug)
 
 
-class CreateView(LoginRequiredMixin, UserPassesTestMixin, _CreateView):
+class CreateView(BaseCreateView):
     model = Department
+    form_class = DepartmentForm
     template_name = "department/form.html"
-    fields = ["name", "description", "abbreviation", "facility", "parent"]
-
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
-
+    
     def get_success_url(self):
         """
         Return the URL to redirect to after processing a valid form submission.
         """
         facility_slug = self.kwargs.get('facility_slug')
-        department_slug = self.object.slug  # Assuming the department has a slug field
+        department_slug = self.object.slug
 
         # Generate the URL dynamically with both slugs
         return reverse('facilities:departments:show', kwargs={
@@ -90,27 +70,18 @@ class CreateView(LoginRequiredMixin, UserPassesTestMixin, _CreateView):
         })
 
 
-class UpdateView(LoginRequiredMixin, UserPassesTestMixin, _UpdateView):
+class UpdateView(BaseUpdateView):
     model = Department
-    context_object_name = "department"
+    form_class = DepartmentForm
     template_name = "department/form.html"
     fields = ["name", "description", "abbreviation", "parent", "facility"]
-    success_url = reverse_lazy("facilities:departments:show")
-    slug_url_kwarg = "department_slug"
-
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
-
-    def get_queryset(self):
-        facility_slug = self.kwargs.get("facility_slug")
-        return Department.objects.filter(facility__slug=facility_slug)
 
     def get_success_url(self):
         """
         Return the URL to redirect to after processing a valid form submission.
         """
         facility_slug = self.kwargs.get("facility_slug")
-        department_slug = self.object.slug  # Assuming the department has a slug field
+        department_slug = self.object.slug
 
         return reverse(
             "facilities:departments:show",
@@ -118,10 +89,7 @@ class UpdateView(LoginRequiredMixin, UserPassesTestMixin, _UpdateView):
         )
 
 
-class DeleteView(LoginRequiredMixin, UserPassesTestMixin, _DeleteView):
+class DeleteView(BaseDeleteView):
     model = Department
     template_name = "department/confirm_delete.html"
     success_url = reverse_lazy("departments:index")
-
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin

@@ -1,154 +1,199 @@
 # facility/views/quarters.py
 
-from django.urls import reverse_lazy
-from django.views.generic import (
-    ListView as _ListView,
-    CreateView as _CreateView,
-    UpdateView as _UpdateView,
-    DeleteView as _DeleteView,
-    DetailView as _DetailView,
-)
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.urls import reverse_lazy, reverse
 
-from facility.models.quarters import Quarters, QuartersType
-from facility.models.facility import Facility
 from organization.models.organization import Organization
+from core.views.base import (
+    BaseIndexByFilterTableView,
+    BaseCreateView,
+    BaseDeleteView,
+    BaseDetailView,
+    BaseTableListView,
+    BaseUpdateView,
+)
+
+from ..models.quarters import Quarters, QuartersType
+from ..tables.quarters import QuartersTable, QuartersTypeTable
+from ..forms.quarters import QuartersForm, QuartersTypeForm
+from ..models.facility import Facility
 
 
-class IndexView(LoginRequiredMixin, _ListView):
+class IndexView(BaseTableListView):
     model = Quarters
     template_name = "quarters/index.html"
-    context_object_name = "quarters_list"
+    table_class = QuartersTable
+    context_object_name = "quarters"
 
-    def get_queryset(self):
-        return Quarters.objects.filter(
-            facility__organization=self.request.user.get_profile().organization
-        )
 
-class IndexByFacilityView(LoginRequiredMixin, _ListView):
-    model = Quarters
-    template_name = 'quarters/index.html'
-    context_object_name = 'quarters_list'
-
-    def get_queryset(self):
-        facility = get_object_or_404(Facility, slug=self.kwargs.get('slug'))
-        return Quarters.objects.filter(facility=facility)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['facility'] = get_object_or_404(Facility, slug=self.kwargs.get('slug'))
-        return context
-
-class IndexByQuartersTypeView(LoginRequiredMixin, _ListView):
+class IndexByFacilityView(BaseIndexByFilterTableView):
     model = Quarters
     template_name = "quarters/index.html"
-    context_object_name = "quarters_list"
-
-    def get_queryset(self):
-        quarters_type = get_object_or_404(QuartersType, slug=self.kwargs.get("slug"))
-        return Quarters.objects.filter(type=quarters_type)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["quarters_type"] = get_object_or_404(
-            QuartersType, slug=self.kwargs.get("slug")
-        )
-        return context
+    context_object_name = "quarters"
+    table_class = QuartersTable
+    lookup_keys = ["facility_slug", "facility_pk"]
+    filter_field = "facility"
+    filter_model = Facility
+    context_object_name_for_filter = "facility"
 
 
-class ShowView(LoginRequiredMixin, _DetailView):
+class IndexByQuartersTypeView(BaseIndexByFilterTableView):
+    model = Quarters
+    template_name = "quarters/index.html"
+    context_object_name = "quarters"
+    table_class = QuartersTable
+    filter_field = "type"
+    filter_model = QuartersType
+    context_object_name_for_filter = "quarters type"
+    url_kwarg = "slug"
+
+
+class ShowView(BaseDetailView):
     model = Quarters
     template_name = "quarters/show.html"
     context_object_name = "quarters"
 
 
-class CreateView(LoginRequiredMixin, UserPassesTestMixin, _CreateView):
+class CreateView(BaseCreateView):
     model = Quarters
+    form_class = QuartersForm
+    template_name = "quarters/form.html"
+
+    def get_success_url(self):
+        """
+        Return the URL to redirect to after processing a valid form submission.
+        """
+        facility_slug = self.kwargs.get("facility_slug")
+        quarters_slug = self.object.slug
+
+        # Generate the URL dynamically with both slugs
+        return reverse(
+            "facilities:quarters:show",
+            kwargs={"facility_slug": facility_slug, "quarters_slug": quarters_slug},
+        )
+
+
+class UpdateView(BaseUpdateView):
+    model = Quarters
+    form_class = QuartersForm
     template_name = "quarters/form.html"
     fields = ["name", "description", "capacity", "type", "facility"]
-    success_url = reverse_lazy("facility:quarters_index")
 
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
+    def get_success_url(self):
+        """
+        Return the URL to redirect to after processing a valid form submission.
+        """
+        facility_slug = self.kwargs.get("facility_slug")
+        quarters_slug = self.object.slug
 
-
-class UpdateView(LoginRequiredMixin, UserPassesTestMixin, _UpdateView):
-    model = Quarters
-    template_name = "quarters/form.html"
-    fields = ["name", "description", "capacity", "type", "facility"]
-    success_url = reverse_lazy("facility:quarters:index")
-
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
+        return reverse(
+            "facilities:quarters:show",
+            kwargs={"facility_slug": facility_slug, "quarters_slug": quarters_slug},
+        )
 
 
-class DeleteView(LoginRequiredMixin, UserPassesTestMixin, _DeleteView):
+class DeleteView(BaseDeleteView):
     model = Quarters
     template_name = "quarters/confirm_delete.html"
-    success_url = reverse_lazy("facility:quarters:index")
 
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
+    def get_success_url(self):
+        """
+        Return the URL to redirect to after processing a valid form submission.
+        """
+        facility_slug = self.kwargs.get("facility_slug")
+        quarters_slug = self.object.slug
 
-
-class QuartersTypeIndexView(LoginRequiredMixin, _ListView):
-    model = QuartersType
-    template_name = "quarters_type/index.html"
-    context_object_name = "quarters_type_list"
-
-    def get_queryset(self):
-        return QuartersType.objects.filter(
-            organization=self.request.user.get_profile().organization
+        return reverse(
+            "facilities:quarters:index",
+            kwargs={"facility_slug": facility_slug},
         )
 
 
-class QuartersTypeShowView(LoginRequiredMixin, _DetailView):
+class QuartersTypeIndexView(BaseTableListView):
     model = QuartersType
-    template_name = "quarters_type/show.html"
-    context_object_name = "quarters_type"
+    template_name = "quarters/type/index.html"
+    table_class = QuartersTypeTable
+    context_object_name = "quarters types"
 
 
-class QuartersTypeCreateView(LoginRequiredMixin, UserPassesTestMixin, _CreateView):
+class QuartersTypeIndexByOrganizationView(BaseIndexByFilterTableView):
     model = QuartersType
-    template_name = "quarters_type/form.html"
-    fields = ["name", "description", "organization"]
-    success_url = reverse_lazy("facility:quarters_type:index")
+    template_name = "quarters/type/index.html"
+    context_obect_name = "quarters types"
+    table_class = QuartersTypeTable
+    lookup_keys = ["organization_slug", "organization_pk"]
+    filter_field = "organization"
+    filter_model = Organization
+    context_object_name_for_filter = "organization"
 
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
 
-
-class QuartersTypeUpdateView(LoginRequiredMixin, UserPassesTestMixin, _UpdateView):
+class QuartersTypeShowView(BaseDetailView):
     model = QuartersType
-    template_name = "quarters_type/form.html"
-    fields = ["name", "description", "organization"]
-    success_url = reverse_lazy("facility:quarters_type:index")
-
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
+    template_name = "quarters/type/show.html"
+    context_object_name = "quarters type"
+    slug_field = "slug"
+    slug_url_kwarg = "quarters_type_slug"
 
 
-class QuartersTypeDeleteView(LoginRequiredMixin, UserPassesTestMixin, _DeleteView):
+class QuartersTypeCreateView(BaseCreateView):
     model = QuartersType
-    template_name = "quarters_type/confirm_delete.html"
-    success_url = reverse_lazy("facility:quarters_type:index")
+    template_name = "quarters/type/form.html"
+    success_url = reverse_lazy("facility:quarters:types:index")
 
-    def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
+    def get_success_url(self):
+        """
+        Return the URL to redirect to after processing a valid form submission.
+        """
+        facility_slug = self.kwargs.get("facility_slug")
+        quarters_slug = self.kwargs.get("quarters_slug")
+        type_slug = self.object.slug
 
-
-class QuartersTypeIndexByOrganizationView(LoginRequiredMixin, _ListView):
-    model = QuartersType
-    template_name = "facility/quarters_type/index.html"
-    context_object_name = "quarters_type_list"
-
-    def get_queryset(self):
-        organization = get_object_or_404(Organization, slug=self.kwargs.get("slug"))
-        return QuartersType.objects.filter(organization=organization)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["organization"] = get_object_or_404(
-            Organization, slug=self.kwargs.get("slug")
+        # Generate the URL dynamically with both slugs
+        return reverse(
+            "facilities:quarters:tyoes:show",
+            kwargs={
+                "facility_slug": facility_slug,
+                "quarters_slug": quarters_slug,
+                "type_slug": type_slug,
+            },
         )
-        return context
+
+
+class QuartersTypeUpdateView(BaseUpdateView):
+    model = QuartersType
+    template_name = "quarters/type/form.html"
+    fields = ["name", "description", "organization"]
+    form_class = QuartersTypeForm
+
+    def get_success_url(self):
+        """
+        Return the URL to redirect to after processing a valid form submission.
+        """
+        facility_slug = self.kwargs.get("facility_slug")
+        quarters_slug = self.kwargs.get("quarters_slug")
+        type_slug = self.object.slug
+
+        return reverse(
+            "facilities:quarters:types:show",
+            kwargs={
+                "facility_slug": facility_slug,
+                "quarters_slug": quarters_slug,
+                "type_slug": type_slug,
+            },
+        )
+
+
+class QuartersTypeDeleteView(BaseDeleteView):
+    model = QuartersType
+    template_name = "quarters/type/confirm_delete.html"
+
+    def get_success_url(self):
+        """
+        Return the URL to redirect to after processing a valid form submission.
+        """
+        facility_slug = self.kwargs.get("facility_slug")
+        quarters_slug = self.kwargs.get("quarters_slug")
+
+        return reverse(
+            "facilities:quarters:types:index",
+            kwargs={"facility_slug": facility_slug, "quarters_slug": quarters_slug},
+        )

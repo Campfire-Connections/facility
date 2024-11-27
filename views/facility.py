@@ -1,18 +1,7 @@
 # facility/views/facility.py
 
 from django.urls import reverse_lazy
-from django.views.generic import (
-    ListView as _ListView,
-    CreateView as _CreateView,
-    UpdateView as _UpdateView,
-    DeleteView as _DeleteView,
-    DetailView as _DetailView,
-)
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import TemplateView
-from django_tables2 import MultiTableMixin, SingleTableView
-from django_tables2.config import RequestConfig
 
 from organization.models.organization import Organization
 from enrollment.models.facility import FacilityEnrollment
@@ -20,58 +9,45 @@ from enrollment.tables.facility import FacilityEnrollmentTable
 from course.models.facility_class import FacilityClass
 from course.tables.facility_class import FacilityClassTable
 from user.models import User
-from core.views.base import BaseManageView
+from core.views.base import (
+    BaseManageView,
+    BaseIndexByFilterTableView,
+    BaseCreateView,
+    BaseDeleteView,
+    BaseDetailView,
+    BaseTableListView,
+    BaseUpdateView,
+)
+
 from ..models.facility import Facility
-from ..models.department import Department
-from ..models.quarters import Quarters
 from ..forms.facility import FacilityForm
 from ..tables.facility import FacilityTable
+from ..models.department import Department
 from ..tables.department import DepartmentTable
+from ..models.quarters import Quarters
 from ..tables.quarters import QuartersTable
 from ..tables.faculty import FacultyTable
 
-class IndexView(SingleTableView):
+
+class IndexView(BaseTableListView):
     model = Facility
     template_name = "facility/index.html"
     table_class = FacilityTable
     context_object_name = "facilities"
 
 
-class IndexByOrganizationView(_ListView):
+class IndexByOrganizationView(BaseIndexByFilterTableView):
     model = Facility
     template_name = "facility/index.html"
     context_object_name = "facilities"
-
-    def get_queryset(self):
-        # Allow lookup by pk or slug
-        organization_lookup = self.kwargs.get("organization_pk") or self.kwargs.get(
-            "organization_slug"
-        )
-
-        # Check if the lookup is a digit (assume it's a pk if so)
-        if organization_lookup.isdigit():
-            organization = get_object_or_404(Organization, pk=organization_lookup)
-        else:
-            organization = get_object_or_404(Organization, slug=organization_lookup)
-
-        return Facility.objects.filter(organization=organization)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        organization_lookup = self.kwargs.get("organization_pk") or self.kwargs.get(
-            "organization_slug"
-        )
-
-        if organization_lookup.isdigit():
-            organization = get_object_or_404(Organization, pk=organization_lookup)
-        else:
-            organization = get_object_or_404(Organization, slug=organization_lookup)
-
-        context["organization"] = organization
-        return context
+    table_class = FacilityTable
+    lookup_keys = ["organization_slug", "organization_pk"]
+    filter_field = "organization"
+    filter_model = Organization
+    context_object_name_for_filter = "organization"
 
 
-class ManageView(LoginRequiredMixin, UserPassesTestMixin, BaseManageView):
+class ManageView(BaseManageView):
     template_name = "facility/manage.html"
 
     def get_facility(self):
@@ -95,7 +71,9 @@ class ManageView(LoginRequiredMixin, UserPassesTestMixin, BaseManageView):
             },
             "facility_classes": {
                 "class": FacilityClassTable,
-                "queryset": FacilityClass.objects.filter(facility_enrollment__facility=facility),
+                "queryset": FacilityClass.objects.filter(
+                    facility_enrollment__facility=facility
+                ),
                 "paginate_by": 6,
             },
             "facility_enrollments": {
@@ -110,66 +88,146 @@ class ManageView(LoginRequiredMixin, UserPassesTestMixin, BaseManageView):
         Check if the user is a faculty member with admin privileges.
         """
         return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
-class ShowView(_DetailView):
+
+    def get_create_url(self, table):
+        facility = self.get_facility()
+        return table.get_url("add", context={"facility_slug": facility.slug})
+
+
+class ShowView(BaseDetailView):
+    """
+    View class for displaying detailed information about a specific facility. This class extends
+    BaseDetailView to provide a structured way to present various tables related to the facility,
+    including departments, quarters, faculty, and enrollments.
+
+    Attributes:
+        model (type): The model class associated with the view, in this case, Facility.
+        template_name (str): The name of the template used to render the view.
+        context_object_name (str): The name of the context variable for the facility object.
+        slug_field (str): The field used to identify the facility in the URL.
+        slug_url_kwarg (str): The URL keyword argument that contains the facility slug.
+
+    Methods:
+        get_tables_config(): Returns a configuration dictionary for the tables associated with the
+        facility, including their classes and querysets.
+
+    Args:
+        self: The instance of the class.
+
+    Returns:
+        dict: A dictionary containing the configuration for the tables related to the facility.
+    """
+
     model = Facility
     template_name = "facility/show.html"
     context_object_name = "facility"
     slug_field = "slug"
     slug_url_kwarg = "facility_slug"
 
-    def get_context_data(self, **kwargs):
+    def get_tables_config(self):
         """
-        Add tables of related data for departments, quarters (filtered by quarters_type),
-        faculty, and facility enrollments.
+        View class for displaying detailed information about a specific facility. This class
+        extends BaseDetailView to provide a structured way to present various tables related to the
+        facility, including departments, quarters, faculty, and enrollments.
+
+        Attributes:
+            model (type): The model class associated with the view, in this case, Facility.
+            template_name (str): The name of the template used to render the view.
+            context_object_name (str): The name of the context variable for the facility object.
+            slug_field (str): The field used to identify the facility in the URL.
+            slug_url_kwarg (str): The URL keyword argument that contains the facility slug.
+
+        Methods:
+            get_tables_config(): Returns a configuration dictionary for the tables associated with
+            the facility, including their classes and querysets.
+
+        Args:
+            self: The instance of the class.
+
+        Returns:
+            dict: A dictionary containing the configuration for the tables related to the facility.
         """
-        context = super().get_context_data(**kwargs)
+
         facility = self.get_object()
-
-        # Fetch related data
-        departments = Department.objects.filter(facility=facility)
-        # faculty_type = QuartersType.objects.get(name='faculty')
-        quarters = Quarters.objects.filter(facility=facility)  # , type=faculty_type)
-        faculty = User.objects.filter(
-            user_type="FACULTY", facultyprofile__facility=facility
-        ).select_related("facultyprofile")
-        facility_enrollments = FacilityEnrollment.objects.filter(facility=facility)
-
-        # Initialize tables
-        department_table = DepartmentTable(departments)
-        quarters_table = QuartersTable(quarters)
-        faculty_table = FacultyTable(faculty)
-        facility_enrollment_table = FacilityEnrollmentTable(facility_enrollments)
-
-        # Configure tables with request context for pagination, sorting, etc.
-        RequestConfig(self.request).configure(department_table)
-        RequestConfig(self.request).configure(quarters_table)
-        RequestConfig(self.request).configure(faculty_table)
-        RequestConfig(self.request).configure(facility_enrollment_table)
-
-        # Add tables to context
-        context["departments_table"] = department_table
-        context["quarters_table"] = quarters_table
-        context["faculty_table"] = faculty_table
-        context["facility_enrollment_table"] = facility_enrollment_table
-
-        return context
+        return {
+            "departments_table": {
+                "class": DepartmentTable,
+                "queryset": Department.objects.filter(facility=facility),
+            },
+            "quarters_table": {
+                "class": QuartersTable,
+                "queryset": Quarters.objects.filter(facility=facility),
+            },
+            "faculty_table": {
+                "class": FacultyTable,
+                "queryset": User.objects.filter(
+                    user_type="FACULTY", facultyprofile__facility=facility
+                ).select_related("facultyprofile"),
+            },
+            "facility_enrollment_table": {
+                "class": FacilityEnrollmentTable,
+                "queryset": FacilityEnrollment.objects.filter(facility=facility),
+            },
+        }
 
 
-class CreateView(_CreateView):
+class CreateView(BaseCreateView):
+    """
+    View class for creating new instances of the Facility model. This class extends BaseCreateView
+    to provide a form for creating facilities, specifying the model, form class, template, and
+    success URL for redirection after a successful creation.
+
+    Attributes:
+        model (type): The model class associated with the view, in this case, Facility.
+        form_class (type): The form class used for creating new instances of the model.
+        template_name (str): The name of the template used to render the form.
+        success_url (str): The URL to redirect to upon successful creation of a facility.
+
+    Args:
+        self: The instance of the class.
+    """
+
     model = Facility
     form_class = FacilityForm
     template_name = "facility/form.html"
-    success_url = reverse_lazy("facility_index")
+    success_url = reverse_lazy("facilities:index")
 
 
-class UpdateView(_UpdateView):
+class UpdateView(BaseUpdateView):
+    """
+    View class for updating existing instances of the Facility model. This class extends
+    BaseUpdateView to provide a form for editing facilities, specifying the model, form class, and
+    template used for rendering the update form.
+
+    Attributes:
+        model (type): The model class associated with the view, in this case, Facility.
+        form_class (type): The form class used for updating instances of the model.
+        template_name (str): The name of the template used to render the form.
+
+    Args:
+        self: The instance of the class.
+    """
+
     model = Facility
     form_class = FacilityForm
     template_name = "facility/form.html"
-    success_url = reverse_lazy("facility_index")
+    success_url = reverse_lazy("facilities:index")
 
 
-class DeleteView(_DeleteView):
+class DeleteView(BaseDeleteView):
+    """
+    View class for confirming the deletion of an existing instance of the Facility model. This
+    class extends BaseDeleteView to provide a confirmation interface for deleting facilities,
+    specifying the model and template used for rendering the confirmation page.
+
+    Attributes:
+        model (type): The model class associated with the view, in this case, Facility.
+        template_name (str): The name of the template used to render the confirmation page.
+
+    Args:
+        self: The instance of the class.
+    """
+
     model = Facility
     template_name = "facility/confirm_delete.html"
-    success_url = reverse_lazy("facility_index")
+    success_url = reverse_lazy("facilities:index")

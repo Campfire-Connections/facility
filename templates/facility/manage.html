@@ -1,3 +1,4 @@
+<!-- facility/manage.html -->
 {% extends 'base/manage.html' %}
 {% load static %}
 {% load render_table from django_tables2 %}
@@ -9,7 +10,7 @@
 <div id="manage">
     {{ block.super }}
 
-    {% for item in tables_with_names %}
+    {% for item in tables_with_metadata %}
     <section class="card">
         <h2> {{ item.name | title }} 
             <a href="{{ item.create_url }}">

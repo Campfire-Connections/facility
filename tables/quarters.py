@@ -3,16 +3,16 @@
 import django_tables2 as tables
 from core.tables.base import BaseTable
 
-from ..models.quarters import Quarters
+from ..models.quarters import Quarters, QuartersType
 
 
 class QuartersTable(BaseTable):
     """
-    QuartersTable is a Django table that organizes and displays information about quarters, 
+    QuartersTable is a Django table that organizes and displays information about quarters,
     including their associated facility, type, capacity, and occupancy.
 
-    This table is built using django-tables2 and provides a structured view of the Quarters model. 
-    It includes columns for the facility name, type of quarters, capacity, and current occupancy, 
+    This table is built using django-tables2 and provides a structured view of the Quarters model.
+    It includes columns for the facility name, type of quarters, capacity, and current occupancy,
     facilitating easy integration with Django views and templates.
 
     Attributes:
@@ -26,7 +26,7 @@ class QuartersTable(BaseTable):
             fields: The fields to be included in the table representation.
 
         url_namespace: The namespace for the URLs related to quarters.
-        urls: A dictionary defining URL patterns for adding, showing, editing, and deleting 
+        urls: A dictionary defining URL patterns for adding, showing, editing, and deleting
             quarters.
     """
 
@@ -47,6 +47,32 @@ class QuartersTable(BaseTable):
         )  # Adjust fields as necessary
 
     url_namespace = "facilities:quarters"
+    urls = {
+        "add": {"kwargs": {"facility_slug": "facility__slug"}},
+        "show": {
+            "kwargs": {"facility_slug": "facility__slug", "quarters_slug": "slug"}
+        },
+        "edit": {
+            "kwargs": {"facility_slug": "facility__slug", "quarters_slug": "slug"}
+        },
+        "delete": {
+            "kwargs": {"facility_slug": "facility__slug", "quarters_slug": "slug"}
+        },
+    }
+
+
+class QuartersTypeTable(BaseTable):
+
+    class Meta:
+        model = QuartersType
+        fields = (
+            "name",
+            "description",
+            "organization",
+            "parent",
+        )
+
+    url_namespace = "facilities:quarters:types"
     urls = {
         "add": {"kwargs": {"facility_slug": "facility__slug"}},
         "show": {
