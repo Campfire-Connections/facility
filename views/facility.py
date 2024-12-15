@@ -55,7 +55,11 @@ class ManageView(BaseManageView):
         Get the facility associated with the current user.
         """
         user = self.request.user
-        profile = user.facultyprofile
+        for f in user._meta.get_fields():
+            if hasattr(user, f.name):
+                print(f"{f.name}: {getattr(user, f.name)}")
+        profile = user.get_profile()
+        print(profile)
         return get_object_or_404(Facility, id=profile.facility_id)
 
     def get_tables_config(self):

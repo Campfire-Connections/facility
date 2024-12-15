@@ -1,42 +1,28 @@
 # facility/views/faculty.py
 
-from django.urls import reverse_lazy, reverse
-from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+
 
 from core.views.base import (
     BaseManageView,
-    BaseIndexByFilterTableView,
+    BaseTableListView,
     BaseCreateView,
     BaseDeleteView,
     BaseDetailView,
-    BaseTableListView,
     BaseUpdateView,
     BaseFormView,
 )
-
-from django.contrib.auth import authenticate, login
-from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import TemplateView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.forms import modelformset_factory
-from django.contrib import messages
-from django_tables2 import MultiTableMixin, SingleTableView
-
 from user.models import User
-from user.mixins import AdminRequiredMixin
-from organization.models.organization import Organization
 
-from ..models.facility import Facility
 from ..models.faculty import Faculty, FacultyProfile
 from ..tables.faculty import FacultyTable
 from ..forms.faculty import (
-    RegistrationForm,
     FacultyForm,
     PromoteFacultyForm,
     AssignDepartmentForm,
-    AssignClassForm,
-    ChangeQuartersForm,
+    RegistrationForm,
 )
 
 
@@ -45,24 +31,26 @@ class IndexView(BaseTableListView):
     template_name = "faculty/index.html"
     context_object_name = "faculty"
     table_class = FacultyTable
+    paginate_by = 10
 
     def get_queryset(self):
-        return User.objects.filter(role="FACULTY")
+        return User.objects.filter(user_type=User.UserType.FACULTY)
 
 
 class ManageView(BaseManageView):
     template_name = "faculty/manage.html"
 
     def test_func(self):
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
+        return self.request.user.user_type == User.UserType.FACULTY and self.request.user.is_admin
 
     def get_tables_config(self):
+        faculty_qs = User.objects.filter(
+            facility=self.request.user.facultyprofile_profile.facility
+        )
         return {
             "faculty": {
                 "class": FacultyTable,
-                "queryset": Faculty.objects.filter(
-                    facility=self.request.user.facultyprofile.facility
-                ),
+                "queryset": faculty_qs,
             }
         }
 
@@ -76,15 +64,16 @@ class ManageView(BaseManageView):
         }
 
 
-class CreateView(BaseCreateView):
+class CreateView(LoginRequiredMixin, BaseCreateView):
     model = FacultyProfile
     form_class = FacultyForm
     template_name = "faculty/form.html"
     success_url = reverse_lazy("facilities:faculty:index")
     action = "Create"
+    success_message = "Faculty member created successfully!"
+    error_message = "Failed to create faculty member."
 
-
-class UpdateView(BaseUpdateView):
+class UpdateView(LoginRequiredMixin, BaseUpdateView):
     model = FacultyProfile
     form_class = FacultyForm
     template_name = "faculty/form.html"
@@ -92,7 +81,7 @@ class UpdateView(BaseUpdateView):
     action = "Edit"
 
 
-class PromoteView(BaseUpdateView):
+class PromoteView(LoginRequiredMixin, BaseUpdateView):
     model = FacultyProfile
     form_class = PromoteFacultyForm
     template_name = "faculty/promote.html"
@@ -100,29 +89,11 @@ class PromoteView(BaseUpdateView):
     action = "Promote"
 
 
-class IndexByFacilityView(BaseIndexByFilterTableView):
-    model = Faculty
-    table_class = FacultyTable
-    template_name = "faculty/index.html"
-    filter_field = "facultyprofile__facility"
-    related_model = Facility
-    url_kwarg = "facility_slug"
-
-
-class DeleteView(BaseDeleteView):
+class DeleteView(LoginRequiredMixin, BaseDeleteView):
     model = FacultyProfile
     template_name = "faculty/confirm_delete.html"
     success_url = reverse_lazy("faculty_index")
     action = "Delete"
-
-
-class IndexByOrganizationView(BaseIndexByFilterTableView):
-    model = Faculty
-    table_class = FacultyTable
-    template_name = "faculty/index.html"
-    filter_field = "organization"
-    related_model = Organization
-    url_kwarg = "organization_slug"
 
 
 class ShowView(BaseDetailView):
