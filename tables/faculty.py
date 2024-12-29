@@ -53,3 +53,7 @@ class FacultyTable(BaseTable):
         },
     }
     url_namespace = "facilities:faculty"
+
+class FacultyByFacilityTable(FacultyTable):
+    class Meta(FacultyTable.Meta):
+        pass

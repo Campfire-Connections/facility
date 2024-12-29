@@ -33,7 +33,6 @@ class FacultyProfileQuerySet(models.QuerySet):
             queryset=FacultyEnrollment.objects.select_related('facility_enrollment__facility')
             if enrollment:
                 queryset = queryset.filter(facility_enrollment=enrollment).distinct()
-            print(queryset)
             return self.prefetch_related(
                 Prefetch(
                     'enrollments',

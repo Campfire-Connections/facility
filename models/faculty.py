@@ -76,7 +76,7 @@ class FacultyProfile(BaseUserProfile):
         """
         Dynamically fetch enrollments for this faculty member.
         """
-        return FacultyEnrollment.objects.filter(faculty=self.user)
+        return FacultyEnrollment.objects.filter(faculty=self)
 
     def get_fallback_chain(self):
         return ["facility", "facility.organization"]

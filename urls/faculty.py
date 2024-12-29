@@ -9,6 +9,7 @@ from ..views.faculty import (
     UpdateView,
     DeleteView,
     ManageView,
+    DashboardView,
 )
 
 app_name = "facultys"
@@ -16,6 +17,8 @@ app_name = "facultys"
 urlpatterns = [
     # Index
     path("", IndexView.as_view(), name="index"),
+    # Dashboard
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
     # Show
     path("<int:pk>", ShowView.as_view(), name="show"),
     path("<slug:faculty_slug>/", ShowView.as_view(), name="show"),
@@ -32,4 +35,5 @@ urlpatterns = [
     # Manage specific faculty (actions based on slug or pk)
     path("manage/<slug:faculty_slug>/", ManageView.as_view(), name="manage"),
     path("manage/<int:pk>/", ManageView.as_view(), name="manage"),
+    
 ]

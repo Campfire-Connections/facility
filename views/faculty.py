@@ -4,7 +4,6 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-
 from core.views.base import (
     BaseManageView,
     BaseTableListView,
@@ -13,11 +12,18 @@ from core.views.base import (
     BaseDetailView,
     BaseUpdateView,
     BaseFormView,
+    BaseDashboardView,
 )
 from user.models import User
+from enrollment.tables.faculty_class import ClassScheduleTable
+from enrollment.tables.faculty import FacultyEnrollmentByFacilityEnrollmentTable
+from enrollment.models.faculty import FacultyEnrollment
+from reports.models import GeneratedReport
+from reports.tables import GeneratedReportTable
+from course.models.facility_class import FacilityClass
 
 from ..models.faculty import Faculty, FacultyProfile
-from ..tables.faculty import FacultyTable
+from ..tables.faculty import FacultyTable, FacultyByFacilityTable
 from ..forms.faculty import (
     FacultyForm,
     PromoteFacultyForm,
@@ -41,7 +47,10 @@ class ManageView(BaseManageView):
     template_name = "faculty/manage.html"
 
     def test_func(self):
-        return self.request.user.user_type == User.UserType.FACULTY and self.request.user.is_admin
+        return (
+            self.request.user.user_type == User.UserType.FACULTY
+            and self.request.user.is_admin
+        )
 
     def get_tables_config(self):
         faculty_qs = User.objects.filter(
@@ -72,6 +81,7 @@ class CreateView(LoginRequiredMixin, BaseCreateView):
     action = "Create"
     success_message = "Faculty member created successfully!"
     error_message = "Failed to create faculty member."
+
 
 class UpdateView(LoginRequiredMixin, BaseUpdateView):
     model = FacultyProfile
@@ -115,3 +125,93 @@ class RegisterFacultyView(BaseFormView):
         if user is not None:
             login(self.request, user)
         return super().form_valid(form)
+
+
+class DashboardView(BaseDashboardView):
+    """
+    Dashboard for faculty members.
+    """
+
+    template_name = "faculty/dashboard.html"
+    widgets = ["class_enrollments_widget", "resources_widget"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+
+        return context
+
+    def get_widgets_config(self):
+        """Define widgets for the faculty dashboard."""
+        widgets = {
+            "class_schedule": {
+                "table_class": ClassScheduleTable,
+                "queryset": self.get_class_schedule_queryset(),
+                "priority": 1,
+                "title": "Class Schedule",
+            },
+        }
+
+        # Additional widgets for faculty admins
+        if self.request.user.is_admin:
+            widgets.update(
+                {
+                    "faculty_management": {
+                        "table_class": FacultyEnrollmentByFacilityEnrollmentTable,  # Define separately
+                        "queryset": self.get_faculty_management_queryset(),
+                        "priority": 5,
+                        "title": "Manage Faculty",
+                    },
+                    "reports_table": {
+                        "table_class": GeneratedReportTable,
+                        "queryset": self.get_reports_queryset(),
+                        "title": "Reports",
+                        "priority": 1,
+                    },
+                }
+            )
+
+        return widgets
+
+    def get_class_schedule_queryset(self, facility_enrollment=None):
+        """Fetch data for class schedule widget."""
+        profile = self.request.user.facultyprofile_profile
+
+        if not facility_enrollment:
+            facility_enrollment = self.get_default_facility_enrollment(profile)
+
+        if not facility_enrollment:
+            return FacilityClass.objects.none()
+
+        return FacultyEnrollment.objects.classes_for_faculty(
+            faculty_profile=profile,
+            facility_enrollment=facility_enrollment,
+        )
+
+
+    def get_default_facility_enrollment(self, profile):
+        """
+        Fetch the default facility enrollment for a faculty profile.
+        Returns None if no enrollment is found.
+        """
+        first_enrollment = profile.enrollments.first()
+        return first_enrollment.facility_enrollment if first_enrollment else None
+
+
+    def get_faculty_management_queryset(self):
+        """Fetch data for faculty management widget (admin only)."""
+        return self.request.user.facultyprofile_profile.facility.faculty.all()
+
+    def get_reports_queryset(self):
+        user = self.request.user
+
+        # Reports created by the user
+        created_reports = GeneratedReport.objects.filter(generated_by=user)
+
+        # Reports associated with the user type
+        user_reports = GeneratedReport.objects.filter(template__available_to=user)
+
+        # Combine the QuerySets
+        reports_queryset = created_reports | user_reports
+
+        return reports_queryset.distinct()

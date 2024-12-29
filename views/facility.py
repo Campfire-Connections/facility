@@ -17,6 +17,7 @@ from core.views.base import (
     BaseDetailView,
     BaseTableListView,
     BaseUpdateView,
+    BaseDashboardView,
 )
 
 from ..models.facility import Facility
@@ -55,11 +56,7 @@ class ManageView(BaseManageView):
         Get the facility associated with the current user.
         """
         user = self.request.user
-        for f in user._meta.get_fields():
-            if hasattr(user, f.name):
-                print(f"{f.name}: {getattr(user, f.name)}")
         profile = user.get_profile()
-        print(profile)
         return get_object_or_404(Facility, id=profile.facility_id)
 
     def get_tables_config(self):
@@ -235,3 +232,27 @@ class DeleteView(BaseDeleteView):
     model = Facility
     template_name = "facility/confirm_delete.html"
     success_url = reverse_lazy("facilities:index")
+
+
+class DashboardView(BaseDashboardView):
+    """
+    Dashboard for faculty members.
+    """
+
+    template_name = "faculty/dashboard.html"
+    widgets = ["class_enrollments_widget", "resources_widget"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Example widgets data
+        context["class_enrollments_widget"] = self.get_class_enrollments_data()
+        context["resources_widget"] = self.get_resources_data()
+
+        return context
+
+    def get_class_enrollments_data(self):
+        return ["Class A", "Class B"]
+
+    def get_resources_data(self):
+        return ["Resource 1", "Resource 2"]
