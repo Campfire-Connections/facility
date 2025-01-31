@@ -1,37 +1,11 @@
-{% extends 'base/layout.html' %}
+<!-- facility/templates/quarters/list.html -->
+{% extends 'base/list.html' %}
+{% load static %}
+{% load render_table from django_tables2 %}
+{% load my_filters %}
 
-{% block content %}
-{% if facility %}
-<h1>Quarters of {{ facility.name }}</h1>
-{% else %}
-<h1>Quarters</h1>
-{% endif %}
-<table id="quartersTable" class="table table-striped table-bordered">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Type</th>
-            <th>Capacity</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for quarters in quarters %}
-        <tr>
-            <td>
-                <a href="{% url 'quarters_show' quarters_slug=quarters.slug %}">{{ quarters.name }}</a>
-            </td>
-            <td>{{ quarters.description | truncatechars:30 }}</td>
-            <td>{{ quarters.type }}</td>
-            <td>{{ quarters.capacity }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% block title_text %}{{ organization_labels.quarters_label | title }}{% endblock title_text %}
 
-<script>
-    $(document).ready(function() {
-        $('#quartersTable').DataTable();
-    });
-    </script>
-{% endblock content %}
+{% block objects_title %}{{ organization_labels.quarters_label | title }}{% endblock objects_title %}
+
+{% block object_type %}{{ organization_labels.quarters_label | title }}{% endblock object_type%}

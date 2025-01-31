@@ -30,6 +30,7 @@ class QuartersForm(SuccessMessageMixin, BaseForm, FormValidationMixin):
             "description",
             "facility",
             "type",
+            "capacity"
         ]
 
     def clean_name(self):

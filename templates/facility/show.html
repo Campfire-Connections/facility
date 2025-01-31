@@ -1,70 +1,97 @@
 <!--facility/templates/facility/show.html-->
-{% extends "base/show.html" %}
+{% extends 'base/show.html' %}
+{% load my_filters %}
 {% load static %}
 {% load render_table from django_tables2 %}
-{% load my_filters %}
 
-{% block title_text %}Facility Details{% endblock title_text %}
+{% block stylesheets_local %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/table.css' %}">
+{% endblock stylesheets_local %}
 
-{% block cards %}
-<div id="show">
-    {% block object_details %}
-    <!-- Display basic facility information -->
-    <section class="card">
-        <h3>Facility Information</h3>
-        <dl class="row">
-            <dt class="col-sm-3">Location:</dt>
-            <dd class="col-sm-9">{{ facility.location }}</dd>
+{% block title_text %}{{ facility.name }}{% endblock title_text %}
 
-            <dt class="col-sm-3">Capacity:</dt>
-            <dd class="col-sm-9">{{ facility.capacity }}</dd>
+{% block object_identifier %}{% endblock object_identifier %}
 
-            <dt class="col-sm-3">Description:</dt>
-            <dd class="col-sm-9">{{ facility.description }}</dd>
-        </dl>
-    </section>
-    {% endblock object_details %}
+{% block object_details %}{{ object.organization.get_root_organization | title }}{% endblock object_details %}
 
-    {% block related_tables %}
-    <section class="card mt-4">
-        <h2>
-            Departments
-            <a href="{% url 'facilities:departments:new' facility_slug=facility.slug %}">
-                <i class="fas fa-plus"></i>
-            </a>
-        </h2>
-        {% render_table departments_table %}
-    </section>
+{% block object_nav_tabs %}
+    {{ block.super }}
+    {% block object_nav_tab_faculty %}
+    <li class="nav-item" role="presentation">
+        <a href="#facultyTab" data-bs-toggle="tab" id="tabs_tabFaculty" class="nav-link">{{ organization_labels.faculty_label | title }}</a>
+    </li>
+    {% endblock object_nav_tab_faculty %}
+    {% block object_nav_tab_departments %}
+    <li class="nav-item" role="presentation">
+        <a href="#departmentsTab" data-bs-toggle="tab" id="tabs_tabDepartments" class="nav-link">{{ organization_labels.department_label | pluralize_word:True }}</a>
+    </li>
+    {% endblock object_nav_tab_departments %}
+    {% block object_nav_tab_quarters %}
+    <li class="nav-item" role="presentation">
+        <a href="#quartersTab" data-bs-toggle="tab" id="tabs_tabQuarters" class="nav-link">{{ organization_labels.quarters_label | title }}</a>
+    </li>
+    {% endblock object_nav_tab_quarters %}
+    {% block object_nav_tab_enrollment %}
+    <li class="nav-item" role="presentation">
+        <a href="#enrollmentsTab" data-bs-toggle="tab" id="tabs_tabEnrollment" class="nav-link">{{ organization_labels.facility_enrollment_label | pluralize_word:True }}</a>
+    </li>
+    {% endblock object_nav_tab_enrollment %}
+{% endblock object_nav_tabs %}
 
-    <section class="card mt-4">
-        <h2>
-            Quarters
-            <a href="{% url 'facilities:quarters:new' facility_slug=facility.slug  %}">
-                <i class="fas fa-plus"></i>
-            </a>
-        </h2>
-        {% render_table quarters_table %}
-    </section>
+{% block card_body_wrapper %}
+    {{ block.super }}
 
-    <section class="card mt-4">
-        <h2>
-            Faculty
-            <a href="{% url 'facilities:faculty:new' facility_slug=facility.slug %}">
-                <i class="fas fa-plus"></i>
-            </a>
-        </h2>
-        {% render_table faculty_table %}
-    </section>
+    <div id="facultyTab" class="tab-pane fade">
+        {% block card_body_faculty %}
+        <div class="card-body" id="facultyCard">
+            <h2 class="no-border card-title section-title">{{organization_labels.faculty_label|title}}</h2>
+            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
+                <span id="facilityFaculty" class="readmore" style="max-height: none;">
+                    {% render_table faculty_table %}
+                </span>&nbsp;
+            </div>
+        </div>
+        {% endblock card_body_faculty %}
+    </div>
 
-    <section class="card mt-4">
-        <h2>
-            Facility Enrollments
-            <a href="{% url 'facilities:enrollments:new' facility_slug=facility.slug %}">
-                <i class="fas fa-plus"></i>
-            </a>
-        </h2>
-        {% render_table facility_enrollment_table %}
-    </section>
-    {% endblock related_tables %}
-</div>
-{% endblock cards %}
+    <div id="departmentsTab" class="tab-pane fade">
+        {% block card_body_departments %}
+        <div class="card-body" id="departmentCard">
+            <h2 class="no-border card-title section-title">{{organization_labels.department_label|pluralize_word:True}}</h2>
+            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
+                <span id="facilityDepartments" class="readmore" style="max-height: none;">
+                    {% render_table departments_table %}
+                </span>&nbsp;
+            </div>
+        </div>
+        {% endblock card_body_departments %}
+    </div>
+
+    <div id="quartersTab" class="tab-pane fade">
+        {% block card_body_quarters %}
+        <div class="card-body" id="QuartersCard">
+            <h2 class="no-border card-title section-title">{{organization_labels.quarters_label|title}}</h2>
+            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
+                <span id="facilityEnrollments" class="readmore" style="max-height: none;">
+                    {% render_table quarters_table %}
+                </span>&nbsp;
+            </div>
+        </div>
+        {% endblock card_body_quarters %}
+    </div>
+
+    <div id="enrollmentsTab" class="tab-pane fade">
+        {% block card_body_enrollments %}
+        <div class="card-body" id="EnrollmentCard">
+            <h2 class="no-border card-title section-title">{{organization_labels.facility_enrollment_label|pluralize_word:True}}</h2>
+            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
+                <span id="facilityEnrollments" class="readmore" style="max-height: none;">
+                    {% render_table facility_enrollment_table %}
+                </span>&nbsp;
+            </div>
+        </div>
+        {% endblock card_body_enrollments %}
+    </div>
+    
+{% endblock card_body_wrapper %}

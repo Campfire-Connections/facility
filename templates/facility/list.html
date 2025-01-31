@@ -1,0 +1,11 @@
+<!-- facility/templates/facility/list.html -->
+{% extends 'base/list.html' %}
+{% load static %}
+{% load render_table from django_tables2 %}
+{% load my_filters %}
+
+{% block title_text %}{{ organization_labels.facility_label | pluralize_word:True }}{% endblock title_text %}
+
+{% block objects_title %}{{ organization_labels.facility_label | pluralize_word:True }}{% endblock objects_title %}
+
+{% block object_type %}{{ organization_labels.facility_label | title }}{% endblock object_type%}

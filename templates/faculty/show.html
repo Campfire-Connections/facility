@@ -1,20 +1,16 @@
+<!--facility/templates/faculty/show.html-->
 {% extends 'base/show.html' %}
+{% load my_filters %}
+{% load static %}
+{% load render_table from django_tables2 %}
 
-{% block title_text %}{{ faculty.name }}{% endblock title_text %}
+{% block stylesheets_local %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/table.css' %}">
+{% endblock stylesheets_local %}
 
-{% block content_header_text %}{{ faculty.name }}{% endblock content_header_text %}
+{% block title_text %}{{ faculty.name | title }}{% endblock title_text %}
 
-{% block content_list %}
-<tr>
-    <th><span class="field-name">First Name:</span></th>
-    <td><span class="field-value">{{ faculty.first_name }}</span></td>
-</tr>
-<tr>
-    <th><span class="field-name">Last Name:</span></th>
-    <td><span class="field-value">{{ faculty.last_name }}</span></td>
-</tr>
-{% endblock content_list %}
+{% block object_identifier %}{% endblock object_identifier %}
 
-{% block content_footer %}
-<a href="{% url 'faculty_index' %}">Back to List</a>
-{% endblock content_footer %}
+{% block object_details %}{{ faculty.facultyprofile_profile.facility.organization.get_root_organization | title }}{% endblock object_details %}

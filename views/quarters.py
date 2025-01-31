@@ -1,6 +1,8 @@
 # facility/views/quarters.py
 
 from django.urls import reverse_lazy, reverse
+from django.shortcuts import get_object_or_404
+from django import forms
 
 from organization.models.organization import Organization
 from core.views.base import (
@@ -20,14 +22,14 @@ from ..models.facility import Facility
 
 class IndexView(BaseTableListView):
     model = Quarters
-    template_name = "quarters/index.html"
+    template_name = "quarters/list.html"
     table_class = QuartersTable
     context_object_name = "quarters"
 
 
 class IndexByFacilityView(BaseIndexByFilterTableView):
     model = Quarters
-    template_name = "quarters/index.html"
+    template_name = "quarters/list.html"
     context_object_name = "quarters"
     table_class = QuartersTable
     lookup_keys = ["facility_slug", "facility_pk"]
@@ -38,7 +40,7 @@ class IndexByFacilityView(BaseIndexByFilterTableView):
 
 class IndexByQuartersTypeView(BaseIndexByFilterTableView):
     model = Quarters
-    template_name = "quarters/index.html"
+    template_name = "quarters/list.html"
     context_object_name = "quarters"
     table_class = QuartersTable
     filter_field = "type"
@@ -51,6 +53,16 @@ class ShowView(BaseDetailView):
     model = Quarters
     template_name = "quarters/show.html"
     context_object_name = "quarters"
+    slug_field = "slug"
+    slug_url_kwarg = "quarters_slug"
+
+    def get_object(self):
+        quarters_id = self.kwargs.get("quarters_id")
+        quarters_slug = self.kwargs.get("quarters_slug")
+        if quarters_id:
+            return get_object_or_404(Quarters, pk=quarters_id)
+        else:
+            return get_object_or_404(Quarters, slug=quarters_slug)
 
 
 class CreateView(BaseCreateView):
@@ -70,6 +82,64 @@ class CreateView(BaseCreateView):
             "facilities:quarters:show",
             kwargs={"facility_slug": facility_slug, "quarters_slug": quarters_slug},
         )
+
+    def get_context_data(self, **kwargs):
+        """
+        Add additional context to the template.
+        """
+        context = super().get_context_data(**kwargs)
+
+        # Access organization labels using the context processor
+        labels = self.request.session.get("organization_labels", {})
+
+        # Add the title to the context
+        context["title"] = labels.get("quarters_label", "Quarters")
+
+        return context
+
+    def get_initial(self):
+        """
+        Prepopulate form fields with initial values.
+        """
+        initial = super().get_initial()
+        facility_slug = self.kwargs.get("facility_slug")
+
+        # Fetch the Facility object based on the slug
+        try:
+            facility = Facility.objects.get(slug=facility_slug)
+            initial["facility"] = facility  # Prepopulate the 'facility' field
+        except Facility.DoesNotExist:
+            pass
+
+        return initial
+
+    def get_form(self, *args, **kwargs):
+        """
+        Optionally customize the form to make the 'facility' field hidden.
+        """
+        form = super().get_form(*args, **kwargs)
+        facility_slug = self.kwargs.get("facility_slug")
+
+        # Set the facility field as hidden and prepopulate its value
+        if facility_slug:
+            try:
+                facility = Facility.objects.get(slug=facility_slug)
+                form.fields["facility"].initial = facility
+                form.fields["facility"].widget = forms.HiddenInput()
+                form.fields["facility"].label = None
+            except Facility.DoesNotExist:
+                pass
+
+        return form
+
+    def form_valid(self, form):
+        # Check if the request is an AJAX request
+        if self.request.headers.get("x-requested-with") == "XMLHttpRequest":
+            response_data = {"success": True, "redirect_url": self.get_success_url()}
+            return JsonResponse(response_data)
+
+        # Default behavior for non-AJAX requests
+        return super().form_valid(form)
 
 
 class UpdateView(BaseUpdateView):
@@ -110,14 +180,14 @@ class DeleteView(BaseDeleteView):
 
 class QuartersTypeIndexView(BaseTableListView):
     model = QuartersType
-    template_name = "quarters/type/index.html"
+    template_name = "quarters/type/list.html"
     table_class = QuartersTypeTable
     context_object_name = "quarters types"
 
 
 class QuartersTypeIndexByOrganizationView(BaseIndexByFilterTableView):
     model = QuartersType
-    template_name = "quarters/type/index.html"
+    template_name = "quarters/type/list.html"
     context_obect_name = "quarters types"
     table_class = QuartersTypeTable
     lookup_keys = ["organization_slug", "organization_pk"]

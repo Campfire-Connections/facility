@@ -1,6 +1,8 @@
 <!-- facility/templates/faculty/manage.html -->
 {% extends 'base/manage.html' %}
+{% load static %}
 {% load render_table from django_tables2 %}
+{% load my_filters %}
 
 {% block title_text %}Manage Faculty{% endblock %}
 
@@ -8,9 +10,17 @@
 <div id="manage">
     {{ block.super }}
 
-    {% for item in tables_with_names %}
+    {% for item in tables_with_metadata %}
     <section class="card">
-        <h2> {{ item.name | title }} <a href="#"><i class="fas fa-plus"></i></a></h2>
+        <h2> {{ item.name | title }} 
+            <a href="{{ item.create_url }}">
+            {% if item.icon %}
+                <i class="fas {{ item.icon }}"></i>
+            {% else %}
+                <i class="fas fa-plus"></i>
+            {% endif %}
+            </a>
+        </h2>
         {% render_table item.table %}
     </section>
     {% endfor %}

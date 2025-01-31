@@ -7,10 +7,10 @@ from user.models import User
 
 
 class FacultyTable(BaseTable):
-    first_name = tables.Column(accessor="user__first_name", verbose_name="First Name")
-    last_name = tables.Column(accessor="user__last_name", verbose_name="Last Name")
-    email = tables.Column(accessor="user__email", verbose_name="Email")
-
+    #first_name = tables.Column(accessor="user__first_name", verbose_name="First Name")
+    #last_name = tables.Column(accessor="user__last_name", verbose_name="Last Name")
+    #email = tables.Column(accessor="user__email", verbose_name="Email")
+    #facility = tables.Column(accessor="facultyprofile_profile__facility.name", verbose_name="Facility")
     # organization = tables.Column(
     #     accessor="facultyprofile_profile.organization.name", verbose_name="Organization"
     # )
@@ -21,34 +21,34 @@ class FacultyTable(BaseTable):
         fields = (
             "first_name",
             "last_name",
-            "email",
-            "facility",
-            "organization",
+            #"email",
+            #"facility",
+            #"organization",
         )
 
     urls = {
         "add": {
             "kwargs": {
-                "facility_slug": "facility__slug"
+                "facility_slug": "facultyprofile_profile__facility__slug"
             },
             "icon": "fa-user-plus",
         },
         "show": {
             "kwargs": {
-                "facility_slug": "facility__slug",
-                "faculty_slug": "slug",
+                "facility_slug": "facultyprofile_profile__facility__slug",
+                "faculty_slug": "facultyprofile_profile__slug",
             }
         },
         "edit": {
             "kwargs": {
-                "facility_slug": "facility__slug",
-                "faculty_slug": "slug",
+                "facility_slug": "facultyprofile_profile__facility__slug",
+                "faculty_slug": "facultyprofile_profile__slug",
             }
         },
         "delete": {
             "kwargs": {
-                "facility_slug": "facility__slug",
-                "faculty_slug": "slug",
+                "facility_slug": "facultyprofile_profile__facility__slug",
+                "faculty_slug": "facultyprofile_profile__slug",
             }
         },
     }

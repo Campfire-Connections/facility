@@ -3,57 +3,8 @@
 {% load render_table from django_tables2 %}
 {% load my_filters %}
 
-{% block content_heading %}
-<h2> Departments
-    <a href="{% url facilities:departments {'facility_slug':facility.slug}}">
-        <i class="fas fa-plus"></i>
-    </a>
-</h2>
-{% endblock content_heading %}
+{% block title_text %} {{ organization_labels.department_label | pluralize_word:True }}{% endblock title_text %}
 
-{% block content_content %}
-<div id="list">
+{% block objects_title %}{{ organization_labels.department_label | pluralize_word:True }}{% endblock objects_title %}
 
-    <style>
-        section.card {
-            background-color: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        #manage h2 {
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-        }
-
-        #manage h2 a, #list h2 a {
-            float: right;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        
-        table th, table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        
-        table th {
-            background-color: #f4f4f4;
-        }
-
-        .actions {
-            max-width: 20px;
-        }
-    </style>
-
-    <section class="card">
-        {% render_table table %}
-    </section>
-</div>
-{% endblock content_content %}
+{% block object_type %}{{organization_labels.department_label }}{% endblock object_type%}

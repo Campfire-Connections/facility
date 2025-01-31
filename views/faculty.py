@@ -34,13 +34,22 @@ from ..forms.faculty import (
 
 class IndexView(BaseTableListView):
     model = User
-    template_name = "faculty/index.html"
+    template_name = "faculty/list.html"
     context_object_name = "faculty"
     table_class = FacultyTable
     paginate_by = 10
 
     def get_queryset(self):
-        return User.objects.filter(user_type=User.UserType.FACULTY)
+        queryset = User.objects.filter(user_type=User.UserType.FACULTY)
+
+        # Check if 'facility_slug' is present in the URL
+        facility_slug = self.kwargs.get("facility_slug")
+        if facility_slug:
+            queryset = queryset.filter(
+                facultyprofile_profile__facility__slug=facility_slug
+            )
+
+        return queryset
 
 
 class ManageView(BaseManageView):
@@ -53,12 +62,13 @@ class ManageView(BaseManageView):
         )
 
     def get_tables_config(self):
-        faculty_qs = User.objects.filter(
-            facility=self.request.user.facultyprofile_profile.facility
+        faculty_qs = FacultyEnrollment.objects.select_related("faculty__user").filter(
+            facility_enrollment__facility=self.request.user.facultyprofile_profile.facility
         )
+        print(faculty_qs)
         return {
             "faculty": {
-                "class": FacultyTable,
+                "class": FacultyEnrollmentByFacilityEnrollmentTable,
                 "queryset": faculty_qs,
             }
         }
@@ -113,7 +123,7 @@ class ShowView(BaseDetailView):
 
 
 class RegisterFacultyView(BaseFormView):
-    template_name = "register_faculty.html"
+    template_name = "faculty/register.html"
     form_class = RegistrationForm
     success_url = reverse_lazy("home")
 
@@ -137,7 +147,6 @@ class DashboardView(BaseDashboardView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
 
         return context
 
@@ -188,7 +197,6 @@ class DashboardView(BaseDashboardView):
             facility_enrollment=facility_enrollment,
         )
 
-
     def get_default_facility_enrollment(self, profile):
         """
         Fetch the default facility enrollment for a faculty profile.
@@ -196,7 +204,6 @@ class DashboardView(BaseDashboardView):
         """
         first_enrollment = profile.enrollments.first()
         return first_enrollment.facility_enrollment if first_enrollment else None
-
 
     def get_faculty_management_queryset(self):
         """Fetch data for faculty management widget (admin only)."""
