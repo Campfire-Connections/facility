@@ -8,18 +8,7 @@ from core.mixins import models as mixins
 from core.mixins import settings as stgs
 
 
-class Facility(
-    mixins.NameDescriptionMixin,
-    mixins.TimestampMixin,
-    mixins.SoftDeleteMixin,
-    mixins.AuditMixin,
-    mixins.SlugMixin,
-    mixins.ActiveMixin,
-    mixins.ImageMixin,
-    mixins.ParentChildMixin,
-    stgs.SettingsMixin,
-    models.Model,
-):
+class Facility(mixins.HierarchicalEntity, stgs.SettingsMixin, models.Model):
     """Facility Model."""
 
     # address = GenericRelation("address.Address", null=True, blank=True)
@@ -44,5 +33,4 @@ class Facility(
 
     def get_fallback_chain(self):
         return ['organization']
-
 

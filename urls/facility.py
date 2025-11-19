@@ -54,8 +54,4 @@ urlpatterns = [
         "<slug:facility_slug>/courses/",
         include("course.urls.course", namespace="courses"),
     ),
-    path(
-        "<slug:facility_slug>/classes/",
-        include("course.urls.facility_class", namespace="classes"),
-    ),
 ]

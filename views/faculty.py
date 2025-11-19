@@ -22,7 +22,7 @@ from reports.models import GeneratedReport
 from reports.tables import GeneratedReportTable
 from course.models.facility_class import FacilityClass
 
-from ..models.faculty import Faculty, FacultyProfile
+from ..models.faculty import FacultyProfile
 from ..tables.faculty import FacultyTable, FacultyByFacilityTable
 from ..forms.faculty import (
     FacultyForm,
@@ -117,7 +117,7 @@ class DeleteView(LoginRequiredMixin, BaseDeleteView):
 
 
 class ShowView(BaseDetailView):
-    model = Faculty
+    model = FacultyProfile
     template_name = "faculty/show.html"
     context_object_name = "faculty"
 

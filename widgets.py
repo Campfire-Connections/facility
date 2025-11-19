@@ -4,7 +4,7 @@ from django.views import View
 
 from pages.widgets import BaseWidget
 
-from .models import Facility, Faculty
+from .models import Facility, FacultyProfile
 
 
 class FacultyListWidget(BaseWidget):
@@ -53,13 +53,13 @@ class FacultyListWidget(BaseWidget):
         current_user = request.user
         facility = None
 
-        if hasattr(current_user, "facultyprofile"):
-            facility = current_user.facultyprofile.facility
+        if hasattr(current_user, "facultyprofile_profile"):
+            facility = current_user.facultyprofile_profile.facility
 
         if facility:
-            faculty = Faculty.objects.filter(facultyprofile__facility=facility)
+            faculty = FacultyProfile.objects.filter(facility=facility)
         else:
-            faculty = Faculty.objects.none()
+            faculty = FacultyProfile.objects.none()
 
         return {"faculty": faculty}
 
