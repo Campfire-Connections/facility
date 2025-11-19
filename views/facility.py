@@ -2,6 +2,7 @@
 
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from django_tables2 import RequestConfig
 
 from organization.models.organization import Organization
@@ -20,8 +21,14 @@ from core.views.base import (
     BaseUpdateView,
     BaseDashboardView,
 )
+from core.mixins.views import (
+    FacilityScopedMixin,
+    OrgScopedMixin,
+    PortalPermissionMixin,
+)
 
 from ..models.facility import Facility
+from ..models.faculty import FacultyProfile
 from ..forms.facility import FacilityForm
 from ..tables.facility import FacilityTable
 from ..models.department import Department
@@ -38,7 +45,7 @@ class IndexView(BaseTableListView):
     context_object_name = "facilities"
 
 
-class IndexByOrganizationView(BaseIndexByFilterTableView):
+class IndexByOrganizationView(OrgScopedMixin, BaseIndexByFilterTableView):
     model = Facility
     template_name = "facility/list.html"
     context_object_name = "facilities"
@@ -49,16 +56,22 @@ class IndexByOrganizationView(BaseIndexByFilterTableView):
     context_object_name_for_filter = "organization"
 
 
-class ManageView(BaseManageView):
+class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
     template_name = "facility/manage.html"
+    portal_key = "facility"
 
     def get_facility(self):
         """
         Get the facility associated with the current user.
         """
+        facility = self.get_scope_facility()
+        if facility:
+            return facility
         user = self.request.user
-        profile = user.get_profile()
-        return get_object_or_404(Facility, id=profile.facility_id)
+        profile = getattr(user, "facultyprofile_profile", None)
+        if profile and profile.facility_id:
+            return get_object_or_404(Facility, id=profile.facility_id)
+        raise Http404("Facility not found for user")
 
     def get_tables_config(self):
         """
@@ -85,18 +98,12 @@ class ManageView(BaseManageView):
             },
         }
 
-    def test_func(self):
-        """
-        Check if the user is a faculty member with admin privileges.
-        """
-        return self.request.user.user_type == "FACULTY" and self.request.user.is_admin
-
     def get_create_url(self, table):
         facility = self.get_facility()
         return table.get_url("add", context={"facility_slug": facility.slug})
 
 
-class ShowView(BaseDetailView):
+class ShowView(FacilityScopedMixin, BaseDetailView):
     """
     View class for displaying detailed information about a specific facility. This class extends
     BaseDetailView to provide a structured way to present various tables related to the facility,
@@ -140,9 +147,7 @@ class ShowView(BaseDetailView):
             },
             "faculty_table": {
                 "class": FacultyTable,
-                "queryset": User.objects.filter(
-                    user_type="FACULTY", facultyprofile_profile__facility=facility
-                ).select_related("facultyprofile_profile"),
+                "queryset": FacultyProfile.objects.filter(facility=facility).select_related("user"),
             },
             "facility_enrollment_table": {
                 "class": FacilityEnrollmentTable,
@@ -225,13 +230,14 @@ class DeleteView(BaseDeleteView):
     success_url = reverse_lazy("facilities:index")
 
 
-class DashboardView(BaseDashboardView):
+class DashboardView(PortalPermissionMixin, FacilityScopedMixin, BaseDashboardView):
     """
     Dashboard for faculty members.
     """
 
     template_name = "faculty/dashboard.html"
     widgets = ["class_enrollments_widget", "resources_widget"]
+    portal_key = "faculty"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

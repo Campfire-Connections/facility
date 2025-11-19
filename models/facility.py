@@ -2,18 +2,13 @@
 
 from django.db import models
 from django.urls import reverse
-from address.models import AddressField
 
 from core.mixins import models as mixins
 from core.mixins import settings as stgs
 
 
-class Facility(mixins.HierarchicalEntity, stgs.SettingsMixin, models.Model):
+class Facility(mixins.HierarchicalEntity, mixins.AddressableMixin, stgs.SettingsMixin, models.Model):
     """Facility Model."""
-
-    # address = GenericRelation("address.Address", null=True, blank=True)
-    # address = models.CharField(max_length=255, null=True, blank=True)
-    address = AddressField(blank=True, null=True)
     organization = models.ForeignKey(
         "organization.Organization", on_delete=models.CASCADE, related_name="facilities"
     )
@@ -34,3 +29,9 @@ class Facility(mixins.HierarchicalEntity, stgs.SettingsMixin, models.Model):
     def get_fallback_chain(self):
         return ['organization']
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "slug"], name="unique_facility_slug_per_org"
+            )
+        ]

@@ -10,6 +10,16 @@ class FacultyProfile(BaseUserProfile):
     class Meta:
         verbose_name = "Faculty Profile"
         verbose_name_plural = "Faculty Profiles"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "slug"],
+                name="unique_faculty_slug_per_org",
+            ),
+            models.UniqueConstraint(
+                fields=["facility", "user"],
+                name="unique_faculty_per_facility_user",
+            ),
+        ]
 
     facility = models.ForeignKey(
         "facility.Facility", on_delete=models.SET_NULL, null=True, blank=True
