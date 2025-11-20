@@ -14,6 +14,7 @@ from core.views.base import (
     BaseFormView,
     BaseDashboardView,
 )
+from core.dashboard_data import get_faculty_resources
 from user.models import User
 from enrollment.tables.faculty_class import ClassScheduleTable
 from enrollment.tables.faculty import FacultyEnrollmentByFacilityEnrollmentTable
@@ -143,44 +144,7 @@ class DashboardView(BaseDashboardView):
     """
 
     template_name = "faculty/dashboard.html"
-    widgets = ["class_enrollments_widget", "resources_widget"]
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        return context
-
-    def get_widgets_config(self):
-        """Define widgets for the faculty dashboard."""
-        widgets = {
-            "class_schedule": {
-                "table_class": ClassScheduleTable,
-                "queryset": self.get_class_schedule_queryset(),
-                "priority": 1,
-                "title": "Class Schedule",
-            },
-        }
-
-        # Additional widgets for faculty admins
-        if self.request.user.is_admin:
-            widgets.update(
-                {
-                    "faculty_management": {
-                        "table_class": FacultyEnrollmentByFacilityEnrollmentTable,  # Define separately
-                        "queryset": self.get_faculty_management_queryset(),
-                        "priority": 5,
-                        "title": "Manage Faculty",
-                    },
-                    "reports_table": {
-                        "table_class": GeneratedReportTable,
-                        "queryset": self.get_reports_queryset(),
-                        "title": "Reports",
-                        "priority": 1,
-                    },
-                }
-            )
-
-        return widgets
+    portal_key = "faculty"
 
     def get_class_schedule_queryset(self, facility_enrollment=None):
         """Fetch data for class schedule widget."""
@@ -222,3 +186,24 @@ class DashboardView(BaseDashboardView):
         reports_queryset = created_reports | user_reports
 
         return reports_queryset.distinct()
+
+    def is_faculty_admin(self):
+        return self.request.user.is_admin
+
+    def get_faculty_schedule_widget(self, _definition):
+        queryset = self.get_class_schedule_queryset()
+        return {"table_class": ClassScheduleTable, "queryset": queryset}
+
+    def get_faculty_resources_widget(self, _definition):
+        facility = getattr(self.request.user.facultyprofile_profile, "facility", None)
+        return {"items": get_faculty_resources(facility)}
+
+    def get_faculty_management_widget(self, _definition):
+        queryset = self.get_faculty_management_queryset()
+        return {
+            "table_class": FacultyEnrollmentByFacilityEnrollmentTable,
+            "queryset": queryset,
+        }
+
+    def get_faculty_reports_widget(self, _definition):
+        return {"table_class": GeneratedReportTable, "queryset": self.get_reports_queryset()}

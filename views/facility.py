@@ -21,6 +21,7 @@ from core.views.base import (
     BaseUpdateView,
     BaseDashboardView,
 )
+from core.dashboard_data import get_facility_metrics
 from core.mixins.views import (
     FacilityScopedMixin,
     OrgScopedMixin,
@@ -236,20 +237,20 @@ class DashboardView(PortalPermissionMixin, FacilityScopedMixin, BaseDashboardVie
     """
 
     template_name = "faculty/dashboard.html"
-    widgets = ["class_enrollments_widget", "resources_widget"]
-    portal_key = "faculty"
+    portal_key = "facility"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_facility_metrics_widget(self, _definition):
+        facility = self.get_scope_facility()
+        metrics = get_facility_metrics(facility)
+        if not metrics:
+            return None
+        return {"metrics": metrics}
 
-        # Example widgets data
-        context["class_enrollments_widget"] = self.get_class_enrollments_data()
-        context["resources_widget"] = self.get_resources_data()
-
-        return context
-
-    def get_class_enrollments_data(self):
-        return ["Class A", "Class B"]
-
-    def get_resources_data(self):
-        return ["Resource 1", "Resource 2"]
+    def get_facility_overview_widget(self, _definition):
+        facility = self.get_scope_facility()
+        headline = facility.name if facility else "Facility"
+        content = (
+            "Customize this dashboard by wiring widgets that highlight occupancy, schedules, "
+            "or outstanding actions for your facility team."
+        )
+        return {"content": f"{headline}: {content}"}
