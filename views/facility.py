@@ -21,7 +21,7 @@ from core.views.base import (
     BaseUpdateView,
     BaseDashboardView,
 )
-from core.dashboard_data import get_facility_metrics
+from core.dashboard_data import get_facility_metrics, get_facility_overview_text
 from core.mixins.views import (
     FacilityScopedMixin,
     OrgScopedMixin,
@@ -248,9 +248,4 @@ class DashboardView(PortalPermissionMixin, FacilityScopedMixin, BaseDashboardVie
 
     def get_facility_overview_widget(self, _definition):
         facility = self.get_scope_facility()
-        headline = facility.name if facility else "Facility"
-        content = (
-            "Customize this dashboard by wiring widgets that highlight occupancy, schedules, "
-            "or outstanding actions for your facility team."
-        )
-        return {"content": f"{headline}: {content}"}
+        return {"content": get_facility_overview_text(facility)}

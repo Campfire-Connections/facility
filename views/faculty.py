@@ -14,14 +14,13 @@ from core.views.base import (
     BaseFormView,
     BaseDashboardView,
 )
-from core.dashboard_data import get_faculty_resources
+from core.dashboard_data import get_faculty_resources, get_faculty_schedule
 from user.models import User
 from enrollment.tables.faculty_class import ClassScheduleTable
 from enrollment.tables.faculty import FacultyEnrollmentByFacilityEnrollmentTable
 from enrollment.models.faculty import FacultyEnrollment
 from reports.models import GeneratedReport
 from reports.tables import GeneratedReportTable
-from course.models.facility_class import FacilityClass
 
 from ..models.faculty import FacultyProfile
 from ..tables.faculty import FacultyTable, FacultyByFacilityTable
@@ -146,29 +145,6 @@ class DashboardView(BaseDashboardView):
     template_name = "faculty/dashboard.html"
     portal_key = "faculty"
 
-    def get_class_schedule_queryset(self, facility_enrollment=None):
-        """Fetch data for class schedule widget."""
-        profile = self.request.user.facultyprofile_profile
-
-        if not facility_enrollment:
-            facility_enrollment = self.get_default_facility_enrollment(profile)
-
-        if not facility_enrollment:
-            return FacilityClass.objects.none()
-
-        return FacultyEnrollment.objects.classes_for_faculty(
-            faculty_profile=profile,
-            facility_enrollment=facility_enrollment,
-        )
-
-    def get_default_facility_enrollment(self, profile):
-        """
-        Fetch the default facility enrollment for a faculty profile.
-        Returns None if no enrollment is found.
-        """
-        first_enrollment = profile.enrollments.first()
-        return first_enrollment.facility_enrollment if first_enrollment else None
-
     def get_faculty_management_queryset(self):
         """Fetch data for faculty management widget (admin only)."""
         return self.request.user.facultyprofile_profile.facility.faculty.all()
@@ -191,7 +167,8 @@ class DashboardView(BaseDashboardView):
         return self.request.user.is_admin
 
     def get_faculty_schedule_widget(self, _definition):
-        queryset = self.get_class_schedule_queryset()
+        profile = getattr(self.request.user, "facultyprofile_profile", None)
+        queryset = get_faculty_schedule(profile)
         return {"table_class": ClassScheduleTable, "queryset": queryset}
 
     def get_faculty_resources_widget(self, _definition):
