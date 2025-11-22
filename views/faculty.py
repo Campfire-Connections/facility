@@ -2,6 +2,8 @@
 
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth import get_user_model
+from django.http import Http404
 
 
 from core.views.base import (
@@ -15,7 +17,6 @@ from core.views.base import (
     BaseDashboardView,
 )
 from core.dashboard_data import get_faculty_resources, get_faculty_schedule
-from user.models import User
 from enrollment.tables.faculty_class import ClassScheduleTable
 from enrollment.tables.faculty import FacultyEnrollmentByFacilityEnrollmentTable
 from enrollment.models.faculty import FacultyEnrollment
@@ -30,6 +31,8 @@ from ..forms.faculty import (
     AssignDepartmentForm,
     RegistrationForm,
 )
+
+User = get_user_model()
 
 
 class IndexView(BaseTableListView):
@@ -61,11 +64,17 @@ class ManageView(BaseManageView):
             and self.request.user.is_admin
         )
 
+    def get_facility(self):
+        profile = getattr(self.request.user, "facultyprofile_profile", None)
+        if profile and profile.facility_id:
+            return profile.facility
+        raise Http404("Facility not found for current user.")
+
     def get_tables_config(self):
+        facility = self.get_facility()
         faculty_qs = FacultyEnrollment.objects.select_related("faculty__user").filter(
-            facility_enrollment__facility=self.request.user.facultyprofile_profile.facility
+            facility_enrollment__facility=facility
         )
-        print(faculty_qs)
         return {
             "faculty": {
                 "class": FacultyEnrollmentByFacilityEnrollmentTable,
