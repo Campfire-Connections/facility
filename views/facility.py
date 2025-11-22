@@ -3,7 +3,6 @@
 from django.urls import reverse_lazy
 from django.shortcuts import get_object_or_404
 from django.http import Http404
-from django_tables2 import RequestConfig
 
 from organization.models.organization import Organization
 from enrollment.models.facility import FacilityEnrollment
@@ -20,6 +19,7 @@ from core.views.base import (
     BaseTableListView,
     BaseUpdateView,
     BaseDashboardView,
+    build_tables_from_config,
 )
 from core.dashboard_data import get_facility_metrics, get_facility_overview_text
 from core.mixins.views import (
@@ -159,13 +159,13 @@ class ShowView(FacilityScopedMixin, BaseDetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Instantiate tables from the configuration
-        tables_config = self.get_tables_config()
-        for table_key, config in tables_config.items():
-            table_instance = config["class"](config["queryset"])
-            RequestConfig(self.request).configure(table_instance)
-            context[table_key] = table_instance
-
+        context.update(
+            build_tables_from_config(
+                self.request,
+                self.get_tables_config(),
+                default_paginate=None,
+            )
+        )
         return context
 
 
