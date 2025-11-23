@@ -93,6 +93,16 @@ class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
                 "queryset": Department.objects.filter(facility=facility),
                 "paginate_by": 6,
             },
+            "quarters": {
+                "class": QuartersTable,
+                "queryset": Quarters.objects.filter(facility=facility),
+                "paginate_by": 6,
+            },
+            "faculty": {
+                "class": FacultyTable,
+                "queryset": FacultyProfile.objects.filter(facility=facility).select_related("user"),
+                "paginate_by": 6,
+            },
             "facility_classes": {
                 "class": FacilityClassTable,
                 "queryset": FacilityClass.objects.filter(
@@ -139,6 +149,7 @@ class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
             scope_object=facility,
             facility=facility,
             tables_with_names=formatted,
+            facility_edit_url=reverse_lazy("facilities:update", kwargs={"facility_slug": facility.slug}),
         )
         return context
 

@@ -10,7 +10,15 @@
 <div id="manage">
     {{ block.super }}
 
-{% for item in tables_with_names %}
+    <div class="d-flex justify-content-end" style="margin-bottom:8px;">
+        {% if facility_edit_url %}
+            <a class="btn btn-outline-primary" href="{{ facility_edit_url }}">
+                <i class="fas fa-edit"></i> Edit Facility
+            </a>
+        {% endif %}
+    </div>
+
+    {% for item in tables_with_names %}
     <section class="card">
         <h2> {{ item.name_plural|default:item.name|title }} 
             <a href="{{ item.create_url }}">
