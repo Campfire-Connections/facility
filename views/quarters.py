@@ -27,6 +27,17 @@ class IndexView(BaseTableListView):
     table_class = QuartersTable
     context_object_name = "quarters"
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        facility_slug = self.kwargs.get("facility_slug")
+        if facility_slug:
+            qs = qs.filter(facility__slug=facility_slug)
+        else:
+            profile = getattr(self.request.user, "facultyprofile_profile", None)
+            if profile and profile.facility_id:
+                qs = qs.filter(facility=profile.facility)
+        return qs
+
 
 class IndexByFacilityView(BaseIndexByFilterTableView):
     model = Quarters
