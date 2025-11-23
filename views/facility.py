@@ -92,16 +92,19 @@ class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
                 "class": DepartmentTable,
                 "queryset": Department.objects.filter(facility=facility),
                 "paginate_by": 6,
+                "context": {"facility_slug": facility.slug},
             },
             "quarters": {
                 "class": QuartersTable,
                 "queryset": Quarters.objects.filter(facility=facility),
                 "paginate_by": 6,
+                "context": {"facility_slug": facility.slug},
             },
             "faculty": {
                 "class": FacultyTable,
                 "queryset": FacultyProfile.objects.filter(facility=facility).select_related("user"),
                 "paginate_by": 6,
+                "context": {"facility_slug": facility.slug},
             },
             "facility_classes": {
                 "class": FacilityClassTable,
@@ -109,11 +112,13 @@ class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
                     facility_enrollment__facility=facility
                 ),
                 "paginate_by": 6,
+                "context": {"facility_slug": facility.slug},
             },
             "facility_enrollments": {
                 "class": FacilityEnrollmentTable,
                 "queryset": FacilityEnrollment.objects.filter(facility=facility),
                 "paginate_by": 6,
+                "context": {"facility_slug": facility.slug},
             },
         }
 
