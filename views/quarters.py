@@ -120,6 +120,8 @@ class UpdateView(BaseUpdateView):
     model = Quarters
     form_class = QuartersForm
     template_name = "quarters/form.html"
+    slug_field = "slug"
+    slug_url_kwarg = "quarters_slug"
 
     def get_success_url(self):
         facility_slug = self.kwargs.get("facility_slug")
@@ -134,6 +136,8 @@ class UpdateView(BaseUpdateView):
 class DeleteView(BaseDeleteView):
     model = Quarters
     template_name = "quarters/confirm_delete.html"
+    slug_field = "slug"
+    slug_url_kwarg = "quarters_slug"
 
     def get_success_url(self):
         facility_slug = self.kwargs.get("facility_slug")
