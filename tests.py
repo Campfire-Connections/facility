@@ -28,6 +28,7 @@ from enrollment.views.facility import (
     FacultyEnrollmentCreateView,
     FacultyEnrollmentUpdateView,
 )
+from core.utils import is_faculty_admin
 
 
 class FacilityModelTests(BaseDomainTestCase):
@@ -47,12 +48,12 @@ class FacultyManageViewTests(BaseDomainTestCase):
                 username="faculty.admin",
                 password="pass12345",
                 user_type=User.UserType.FACULTY,
-                is_admin=True,
             )
         FacultyProfile.objects.create(
             user=self.user,
             organization=self.organization,
             facility=self.facility,
+            role=FacultyProfile.FacultyRole.ADMIN,
         )
 
     def test_get_facility_from_profile(self):
@@ -69,7 +70,6 @@ class FacultyManageViewTests(BaseDomainTestCase):
                 username="orphan.faculty",
                 password="pass12345",
                 user_type=User.UserType.FACULTY,
-                is_admin=True,
             )
         request = self.factory.get("/facilities/manage/")
         request.user = orphan_user
@@ -77,6 +77,49 @@ class FacultyManageViewTests(BaseDomainTestCase):
         view.request = request
         with self.assertRaises(Http404):
             view.get_facility()
+
+    def test_is_faculty_admin_helper_respects_role(self):
+        self.assertTrue(is_faculty_admin(self.user))
+
+        with mute_profile_signals():
+            staff_user = User.objects.create_user(
+                username="helper.staff",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        FacultyProfile.objects.create(
+            user=staff_user,
+            organization=self.organization,
+            facility=self.facility,
+            role=FacultyProfile.FacultyRole.STAFF,
+        )
+        self.assertFalse(is_faculty_admin(staff_user))
+
+    def test_faculty_manage_view_allows_facility_admin(self):
+        request = self.factory.get("/facilities/manage/")
+        request.user = self.user
+        view = ManageView()
+        view.request = request
+        self.assertTrue(view.test_func())
+
+    def test_faculty_manage_view_blocks_non_admin(self):
+        with mute_profile_signals():
+            staff_user = User.objects.create_user(
+                username="faculty.staff",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        FacultyProfile.objects.create(
+            user=staff_user,
+            organization=self.organization,
+            facility=self.facility,
+            role=FacultyProfile.FacultyRole.STAFF,
+        )
+        request = self.factory.get("/facilities/manage/")
+        request.user = staff_user
+        view = ManageView()
+        view.request = request
+        self.assertFalse(view.test_func())
 
 
 class QuartersFormTests(BaseDomainTestCase):
@@ -112,12 +155,12 @@ class FacultyEnrollmentViewTests(BaseDomainTestCase):
                 username="faculty.coordinator",
                 password="pass12345",
                 user_type=User.UserType.FACULTY,
-                is_admin=True,
             )
         self.profile = FacultyProfile.objects.create(
             user=self.user,
             organization=self.organization,
             facility=self.facility,
+            role=FacultyProfile.FacultyRole.ADMIN,
         )
         self.quarters_type = QuartersType.objects.create(
             name="Faculty Cabin",
@@ -219,12 +262,12 @@ class FacultyClassAssignmentViewTests(BaseDomainTestCase):
                 username="faculty.coordinator2",
                 password="pass12345",
                 user_type=User.UserType.FACULTY,
-                is_admin=True,
             )
         self.profile = FacultyProfile.objects.create(
             user=self.user,
             organization=self.organization,
             facility=self.facility,
+            role=FacultyProfile.FacultyRole.ADMIN,
         )
         self.quarters_type = QuartersType.objects.create(
             name="Faculty Cabin B",
