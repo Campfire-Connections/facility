@@ -25,6 +25,7 @@ urlpatterns = [
     path("<slug:quarters_slug>", ShowView.as_view(), name="show"),
     # Create
     path("new/", CreateView.as_view(), name="new"),
+    path("new", CreateView.as_view(), name="new_no_slash"),
     # Update
     path("<int:pk>/update/", UpdateView.as_view(), name="update"),
     path("<slug:quarters_slug>/update/", UpdateView.as_view(), name="update"),
