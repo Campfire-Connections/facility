@@ -19,11 +19,8 @@ urlpatterns = [
     path("", IndexView.as_view(), name="index"),
     # Dashboard
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
-    # Manage faculty list (shows all faculty if no slug/pk is given)
+    # Manage faculty list (restricted to current user's facility)
     path("manage/", ManageView.as_view(), name="manage"),
-    # Manage specific faculty (actions based on slug or pk)
-    path("manage/<slug:faculty_slug>/", ManageView.as_view(), name="manage"),
-    path("manage/<int:pk>/", ManageView.as_view(), name="manage"),
     # Show
     path("<int:pk>", ShowView.as_view(), name="show"),
     path("<slug:faculty_slug>/", ShowView.as_view(), name="show"),
