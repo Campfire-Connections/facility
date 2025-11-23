@@ -4,19 +4,21 @@
 {% load render_table from django_tables2 %}
 {% load my_filters %}
 
-{% block title_text %}Manage Facility{% endblock %}
+{% block title_text_focus %}{{ facility.name|default:"Facility" }}{% endblock %}
 
 {% block cards %}
 <div id="manage">
     {{ block.super }}
-
-    <div class="d-flex justify-content-end" style="margin-bottom:8px;">
-        {% if facility_edit_url %}
+    <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
+        <h2 style="width:100%;">Facility Overview
+        <span class="text-muted justify-content-end">{% if facility_edit_url %}
             <a class="btn btn-outline-primary" href="{{ facility_edit_url }}">
                 <i class="fas fa-edit"></i> Edit Facility
             </a>
-        {% endif %}
+        {% endif %}</span>
+    </h2>
     </div>
+
 
     {% for item in tables_with_names %}
     <section class="card">

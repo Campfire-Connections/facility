@@ -4,8 +4,8 @@
 {% load render_table from django_tables2 %}
 {% load my_filters %}
 
-{% block title_text %}{{ organization_labels.quarters_label | title }}{% endblock title_text %}
+{% block title_text %}{{ organization_labels.quarters_label|default:"Quarters"|title }}{% endblock title_text %}
 
-{% block objects_title %}{{ organization_labels.quarters_label | title }}{% endblock objects_title %}
+{% block objects_title %}{{ organization_labels.quarters_label|default:"Quarters"|title }}{% endblock objects_title %}
 
-{% block object_type %}{{ organization_labels.quarters_label | title }}{% endblock object_type%}
+{% block object_type %}{{ organization_labels.quarters_label|default:"Quarters"|title }}{% endblock object_type%}
