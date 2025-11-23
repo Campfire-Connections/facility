@@ -1,10 +1,8 @@
 # facility/views/faculty.py
 
 from django.urls import reverse_lazy
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, authenticate, login
 from django.http import Http404
-
 
 from core.views.base import (
     BaseManageView,
@@ -16,12 +14,19 @@ from core.views.base import (
     BaseFormView,
     BaseDashboardView,
 )
+from core.mixins.views import PortalPermissionMixin, LoginRequiredMixin
 from core.dashboard_data import get_faculty_resources, get_faculty_schedule
+
 from enrollment.tables.faculty_class import ClassScheduleTable
-from enrollment.tables.faculty import FacultyEnrollmentByFacilityEnrollmentTable
+from enrollment.tables.faculty import (
+    FacultyEnrollmentByFacilityEnrollmentTable,
+)
 from enrollment.models.faculty import FacultyEnrollment
+
 from reports.models import GeneratedReport
 from reports.tables import GeneratedReportTable
+
+from facility.forms.faculty import FacultyQuartersAssignmentForm, FacultyClassAssignmentForm
 
 from ..models.faculty import FacultyProfile
 from ..tables.faculty import FacultyTable, FacultyByFacilityTable
@@ -45,7 +50,6 @@ class IndexView(BaseTableListView):
     def get_queryset(self):
         queryset = User.objects.filter(user_type=User.UserType.FACULTY)
 
-        # Check if 'facility_slug' is present in the URL
         facility_slug = self.kwargs.get("facility_slug")
         if facility_slug:
             queryset = queryset.filter(
@@ -55,8 +59,9 @@ class IndexView(BaseTableListView):
         return queryset
 
 
-class ManageView(BaseManageView):
+class ManageView(PortalPermissionMixin, BaseManageView):
     template_name = "faculty/manage.html"
+    portal_key = "faculty"
 
     def test_func(self):
         return (
@@ -87,8 +92,8 @@ class ManageView(BaseManageView):
             "faculty_form": FacultyForm,
             "promotion_form": PromoteFacultyForm,
             "department_form": AssignDepartmentForm,
-            "class_form": ClassAssignmentForm,
-            "quarters_form": QuartersAssignmentForm,
+            "class_form": FacultyClassAssignmentForm,
+            "quarters_form": FacultyQuartersAssignmentForm,
         }
 
 
@@ -161,15 +166,10 @@ class DashboardView(BaseDashboardView):
     def get_reports_queryset(self):
         user = self.request.user
 
-        # Reports created by the user
         created_reports = GeneratedReport.objects.filter(generated_by=user)
-
-        # Reports associated with the user type
         user_reports = GeneratedReport.objects.filter(template__available_to=user)
 
-        # Combine the QuerySets
         reports_queryset = created_reports | user_reports
-
         return reports_queryset.distinct()
 
     def is_faculty_admin(self):
@@ -192,4 +192,7 @@ class DashboardView(BaseDashboardView):
         }
 
     def get_faculty_reports_widget(self, _definition):
-        return {"table_class": GeneratedReportTable, "queryset": self.get_reports_queryset()}
+        return {
+            "table_class": GeneratedReportTable,
+            "queryset": self.get_reports_queryset(),
+        }

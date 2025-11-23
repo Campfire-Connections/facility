@@ -7,6 +7,11 @@ from enrollment.models.faculty import FacultyEnrollment
 
 
 class FacultyProfile(BaseUserProfile):
+    class FacultyRole(models.TextChoices):
+        ADMIN = "ADMIN", "Facility Admin"
+        DEPARTMENT_ADMIN = "DEPARTMENT_ADMIN", "Department Admin"
+        STAFF = "STAFF", "Faculty"
+
     class Meta:
         verbose_name = "Faculty Profile"
         verbose_name_plural = "Faculty Profiles"
@@ -21,9 +26,32 @@ class FacultyProfile(BaseUserProfile):
             ),
         ]
 
+    role = models.CharField(
+        max_length=32,
+        choices=FacultyRole.choices,
+        default=FacultyRole.STAFF,
+    )
+    department = models.ForeignKey(
+        "facility.Department",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="faculty",
+    )
     facility = models.ForeignKey(
         "facility.Facility", on_delete=models.SET_NULL, null=True, blank=True
     )
+
+    @property
+    def is_facility_admin(self):
+        return self.role == self.FacultyRole.ADMIN
+
+    @property
+    def is_department_admin(self):
+        return self.role in (
+            self.FacultyRole.ADMIN,
+            self.FacultyRole.DEPARTMENT_ADMIN,
+        )
 
     @property
     def enrollments(self):
@@ -34,3 +62,8 @@ class FacultyProfile(BaseUserProfile):
 
     def get_fallback_chain(self):
         return ["facility", "facility.organization"]
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+
+        return reverse("facultys:show", kwargs={"faculty_slug": self.slug})

@@ -101,14 +101,22 @@ class FacultyForm(ProfileUserFieldsMixin):
         queryset=Facility.objects.all(),
         required=True,
     )
+    role = forms.ChoiceField(
+        choices=FacultyProfile.FacultyRole.choices,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
 
     class Meta:
         model = FacultyProfile
-        fields = ["facility"]  # Fields specific to FacultyProfile
+        fields = ["facility", "role"]  # Fields specific to FacultyProfile
 
     def save(self, commit=True):
         profile = super().save(commit=False)
         profile.user.user_type = User.UserType.FACULTY
+        # Default to STAFF if not explicitly set
+        if not profile.role:
+            profile.role = FacultyProfile.FacultyRole.STAFF
         if commit:
             profile.user.save()
             profile.save()
@@ -121,14 +129,15 @@ class PromoteFacultyForm(forms.ModelForm):
     Provides a simple interface to toggle a user's administrative status using a checkbox input.
 
     Attributes:
-        is_admin: A checkbox field to set or unset administrative privileges for a user.
+        role: Select the faculty role (facility admin or department admin).
     """
 
     class Meta:
-        model = User
-        fields = ["is_admin"]
+        model = FacultyProfile
+        fields = ["role", "department"]
         widgets = {
-            "is_admin": forms.CheckboxInput(attrs={"class": "form-control"}),
+            "role": forms.Select(attrs={"class": "form-control"}),
+            "department": forms.Select(attrs={"class": "form-control"}),
         }
 
 
@@ -175,3 +184,19 @@ class ChangeQuartersForm(forms.ModelForm):
     class Meta:
         model = FacultyProfile
         fields = ["quarters"]
+
+
+class FacultyQuartersAssignmentForm(forms.Form):
+    """
+    Placeholder: Faculty assigned housing.
+    """
+    quarters = forms.CharField(required=True)
+
+
+
+class FacultyClassAssignmentForm(forms.Form):
+    """
+    Placeholder: Faculty instructs a class.
+    """
+    class_id = forms.CharField(required=True)
+    

@@ -11,6 +11,7 @@ class FacultyTable(BaseTable):
     last_name = tables.Column(accessor="user.last_name", verbose_name="Last Name")
     email = tables.Column(accessor="user.email", verbose_name="Email")
     facility = tables.Column(accessor="facility.name", verbose_name="Facility")
+    role = tables.Column(accessor="get_role_display", verbose_name="Role")
 
     class Meta:
         model = FacultyProfile
@@ -19,6 +20,7 @@ class FacultyTable(BaseTable):
             "last_name",
             "email",
             "facility",
+            "role",
         )
 
     urls = {
