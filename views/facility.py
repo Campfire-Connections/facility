@@ -215,6 +215,8 @@ class UpdateView(BaseUpdateView):
     form_class = FacilityForm
     template_name = "facility/form.html"
     success_url = reverse_lazy("facilities:index")
+    slug_field = "slug"
+    slug_url_kwarg = "facility_slug"
 
 
 class DeleteView(BaseDeleteView):
@@ -225,6 +227,8 @@ class DeleteView(BaseDeleteView):
     model = Facility
     template_name = "facility/confirm_delete.html"
     success_url = reverse_lazy("facilities:index")
+    slug_field = "slug"
+    slug_url_kwarg = "facility_slug"
 
 
 class DashboardView(PortalPermissionMixin, FacilityScopedMixin, BaseDashboardView):
