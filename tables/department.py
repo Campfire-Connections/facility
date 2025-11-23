@@ -69,7 +69,10 @@ class DepartmentTable(BaseTable):
 
     url_namespace = "facilities:departments"
     urls = {
-        "add": {"kwargs": {"facility_slug": "facility_slug"}},
+        "add": {
+            "name": "facilities:departments:new",
+            "kwargs": {"facility_slug": "facility_slug"},
+        },
         "show": {
             "kwargs": {"facility_slug": "facility__slug", "department_slug": "slug"}
         },

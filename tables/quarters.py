@@ -48,7 +48,10 @@ class QuartersTable(BaseTable):
 
     url_namespace = "facilities:quarters"
     urls = {
-        "add": {"kwargs": {"facility_slug": "facility_slug"}},
+        "add": {
+            "name": "facilities:quarters:new",
+            "kwargs": {"facility_slug": "facility_slug"},
+        },
         "show": {
             "kwargs": {"facility_slug": "facility__slug", "quarters_slug": "slug"}
         },
