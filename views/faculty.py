@@ -15,6 +15,7 @@ from core.views.base import (
     BaseDashboardView,
 )
 from core.mixins.views import PortalPermissionMixin, LoginRequiredMixin
+from core.utils import is_faculty_admin
 from core.dashboard_data import get_faculty_resources, get_faculty_schedule
 
 from enrollment.tables.faculty_class import ClassScheduleTable
@@ -64,10 +65,7 @@ class ManageView(PortalPermissionMixin, BaseManageView):
     portal_key = "faculty"
 
     def test_func(self):
-        return (
-            self.request.user.user_type == User.UserType.FACULTY
-            and self.request.user.is_admin
-        )
+        return is_faculty_admin(self.request.user)
 
     def get_facility(self):
         profile = getattr(self.request.user, "facultyprofile_profile", None)

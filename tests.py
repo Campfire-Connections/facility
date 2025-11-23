@@ -50,7 +50,7 @@ class FacultyManageViewTests(BaseDomainTestCase):
                 password="pass12345",
                 user_type=User.UserType.FACULTY,
             )
-        FacultyProfile.objects.create(
+        self.profile = FacultyProfile.objects.create(
             user=self.user,
             organization=self.organization,
             facility=self.facility,
@@ -146,7 +146,8 @@ class FacultyManageViewTests(BaseDomainTestCase):
             instance=profile,
         )
         self.assertTrue(form.is_valid())
-        saved = form.save()
+        with mute_profile_signals():
+            saved = form.save()
         self.assertEqual(saved.role, FacultyProfile.FacultyRole.STAFF)
         self.assertEqual(saved.user.user_type, User.UserType.FACULTY)
 
@@ -156,18 +157,12 @@ class FacultyManageViewTests(BaseDomainTestCase):
             abbreviation="SAFE",
             facility=self.facility,
         )
-        profile = FacultyProfile.objects.create(
-            user=self.user,
-            organization=self.organization,
-            facility=self.facility,
-            role=FacultyProfile.FacultyRole.STAFF,
-        )
         form = PromoteFacultyForm(
             data={
                 "role": FacultyProfile.FacultyRole.ADMIN,
                 "department": department.id,
             },
-            instance=profile,
+            instance=self.profile,
         )
         self.assertTrue(form.is_valid())
         updated = form.save()
