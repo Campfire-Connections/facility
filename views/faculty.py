@@ -3,6 +3,7 @@
 from django.urls import reverse_lazy
 from django.contrib.auth import get_user_model, authenticate, login
 from django.http import Http404
+from django.views.generic import TemplateView
 
 from core.views.base import (
     BaseManageView,
@@ -93,6 +94,29 @@ class ManageView(PortalPermissionMixin, BaseManageView):
             "class_form": FacultyClassAssignmentForm,
             "quarters_form": FacultyQuartersAssignmentForm,
         }
+
+    def get_context_data(self, **kwargs):
+        # Bypass MultiTableMixin's expectation of self.tables; build from config instead.
+        context = TemplateView.get_context_data(self, **kwargs)
+        tables = self.build_tables()
+        formatted = []
+        for table in tables.values():
+            formatted.append(
+                {
+                    "table": table,
+                    "name": table.Meta.model._meta.verbose_name.title(),
+                    "create_url": getattr(table, "add_url", None),
+                    "icon": getattr(table, "add_icon", None),
+                }
+            )
+
+        facility = self.get_facility()
+        context.update(
+            scope_object=facility,
+            facility=facility,
+            tables_with_names=formatted,
+        )
+        return context
 
 
 class CreateView(LoginRequiredMixin, BaseCreateView):
