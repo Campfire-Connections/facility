@@ -31,6 +31,7 @@ urlpatterns = [
     path("<slug:quarters_slug>/update/", UpdateView.as_view(), name="update"),
     # Delete
     path("<int:pk>/delete/", DeleteView.as_view(), name="delete"),
+    path("<slug:quarters_slug>/delete/", DeleteView.as_view(), name="delete"),
 
 
 ]
