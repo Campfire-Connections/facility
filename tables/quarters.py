@@ -56,9 +56,11 @@ class QuartersTable(BaseTable):
             "kwargs": {"facility_slug": "facility__slug", "quarters_slug": "slug"}
         },
         "edit": {
+            "name": "facilities:quarters:update",
             "kwargs": {"facility_slug": "facility__slug", "quarters_slug": "slug"}
         },
         "delete": {
+            "name": "facilities:quarters:delete",
             "kwargs": {"facility_slug": "facility__slug", "quarters_slug": "slug"}
         },
     }
