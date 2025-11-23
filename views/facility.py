@@ -118,10 +118,17 @@ class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
         tables = self.build_tables()
         formatted = []
         for table in tables.values():
+            model_meta = getattr(table, "Meta", None)
+            model = getattr(model_meta, "model", None) if model_meta else None
+            verbose_name = model._meta.verbose_name.title() if model else ""
+            verbose_name_plural = (
+                model._meta.verbose_name_plural.title() if model else verbose_name
+            )
             formatted.append(
                 {
                     "table": table,
-                    "name": table.Meta.model._meta.verbose_name.title(),
+                    "name": verbose_name or table.__class__.__name__,
+                    "name_plural": verbose_name_plural or verbose_name,
                     "create_url": getattr(table, "add_url", None),
                     "icon": getattr(table, "add_icon", None),
                 }
