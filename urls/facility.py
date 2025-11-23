@@ -20,13 +20,9 @@ urlpatterns = [
     path("<int:pk>", ShowView.as_view(), name="show"),
     path("<slug:facility_slug>", ShowView.as_view(), name="show"),
     # Manage
-    path("manage/", ManageView.as_view(), name="manage"),
+    path("<slug:facility_slug>/manage/", ManageView.as_view(), name="manage"),
     # Create
     path("new/", CreateView.as_view(), name="new"),
-    path(
-        "<slug:facility_slug>/faculty/",
-        include("facility.urls.faculty", namespace="faculty"),
-    ),
     # Update
     path("<int:pk>/update/", UpdateView.as_view(), name="update"),
     path("<slug:facility_slug>/update/", UpdateView.as_view(), name="update"),
