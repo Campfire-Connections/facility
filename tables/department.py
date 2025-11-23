@@ -58,8 +58,8 @@ class DepartmentTable(BaseTable):
     """
 
     abbreviation = tables.Column(verbose_name="Abbreviation")
-    facility = tables.Column(accessor="facility.name", verbose_name="Facility")
-    parent = tables.Column(accessor="parent.name", verbose_name="Parent")
+    facility = tables.Column(accessor="facility__name", verbose_name="Facility")
+    parent = tables.Column(accessor="parent__name", verbose_name="Parent")
 
     class Meta:
         model = Department

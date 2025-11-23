@@ -7,10 +7,10 @@ from ..models.faculty import FacultyProfile
 
 
 class FacultyTable(BaseTable):
-    first_name = tables.Column(accessor="user.first_name", verbose_name="First Name")
-    last_name = tables.Column(accessor="user.last_name", verbose_name="Last Name")
-    email = tables.Column(accessor="user.email", verbose_name="Email")
-    facility = tables.Column(accessor="facility.name", verbose_name="Facility")
+    first_name = tables.Column(accessor="user__first_name", verbose_name="First Name")
+    last_name = tables.Column(accessor="user__last_name", verbose_name="Last Name")
+    email = tables.Column(accessor="user__email", verbose_name="Email")
+    facility = tables.Column(accessor="facility__name", verbose_name="Facility")
     role = tables.Column(accessor="get_role_display", verbose_name="Role")
 
     class Meta:
