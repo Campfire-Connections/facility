@@ -60,6 +60,12 @@ class FacultyProfile(BaseUserProfile):
         """
         return FacultyEnrollment.objects.filter(faculty=self)
 
+    def get_root_organization(self):
+        """Return the root organization for this faculty member."""
+        if self.organization:
+            return self.organization.get_root_organization()
+        return None
+
     def get_fallback_chain(self):
         return ["facility", "facility.organization"]
 
