@@ -10,7 +10,7 @@
 <div id="manage">
     {{ block.super }}
 
-    {% for item in tables_with_metadata %}
+{% for item in tables_with_names %}
     <section class="card">
         <h2> {{ item.name | title }} 
             <a href="{{ item.create_url }}">
