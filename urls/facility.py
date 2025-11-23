@@ -23,6 +23,10 @@ urlpatterns = [
     path("manage/", ManageView.as_view(), name="manage"),
     # Create
     path("new/", CreateView.as_view(), name="new"),
+    path(
+        "<slug:facility_slug>/faculty/",
+        include("facility.urls.faculty", namespace="faculty"),
+    ),
     # Update
     path("<int:pk>/update/", UpdateView.as_view(), name="update"),
     path("<slug:facility_slug>/update/", UpdateView.as_view(), name="update"),
