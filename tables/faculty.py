@@ -25,8 +25,9 @@ class FacultyTable(BaseTable):
 
     urls = {
         "add": {
+            "name": "facilities:faculty:new",
             "kwargs": {
-                "facility_slug": "facility__slug"
+                "facility_slug": "facility_slug"
             },
             "icon": "fa-user-plus",
         },
