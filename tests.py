@@ -29,6 +29,7 @@ from enrollment.views.facility import (
     FacultyEnrollmentUpdateView,
 )
 from core.utils import is_faculty_admin
+from facility.forms.faculty import FacultyForm, PromoteFacultyForm
 
 
 class FacilityModelTests(BaseDomainTestCase):
@@ -120,6 +121,58 @@ class FacultyManageViewTests(BaseDomainTestCase):
         view = ManageView()
         view.request = request
         self.assertFalse(view.test_func())
+
+    def test_faculty_form_defaults_role_to_staff(self):
+        with mute_profile_signals():
+            user = User.objects.create_user(
+                username="faculty.form",
+                password="pass12345",
+                email="faculty.form@example.com",
+                user_type=User.UserType.FACULTY,
+            )
+        profile = FacultyProfile(
+            user=user,
+            organization=self.organization,
+            facility=self.facility,
+        )
+        form = FacultyForm(
+            data={
+                "facility": self.facility.id,
+                "user_username": "faculty.form",
+                "user_email": "faculty.form@example.com",
+                "user_first_name": "Form",
+                "user_last_name": "User",
+            },
+            instance=profile,
+        )
+        self.assertTrue(form.is_valid())
+        saved = form.save()
+        self.assertEqual(saved.role, FacultyProfile.FacultyRole.STAFF)
+        self.assertEqual(saved.user.user_type, User.UserType.FACULTY)
+
+    def test_promote_faculty_form_updates_role_and_department(self):
+        department = Department.objects.create(
+            name="Safety",
+            abbreviation="SAFE",
+            facility=self.facility,
+        )
+        profile = FacultyProfile.objects.create(
+            user=self.user,
+            organization=self.organization,
+            facility=self.facility,
+            role=FacultyProfile.FacultyRole.STAFF,
+        )
+        form = PromoteFacultyForm(
+            data={
+                "role": FacultyProfile.FacultyRole.ADMIN,
+                "department": department.id,
+            },
+            instance=profile,
+        )
+        self.assertTrue(form.is_valid())
+        updated = form.save()
+        self.assertEqual(updated.role, FacultyProfile.FacultyRole.ADMIN)
+        self.assertEqual(updated.department, department)
 
 
 class QuartersFormTests(BaseDomainTestCase):
