@@ -132,8 +132,15 @@ class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
             model = getattr(model_meta, "model", None) if model_meta else None
             verbose_name = model._meta.verbose_name.title() if model else ""
             verbose_name_plural = (
-                model._meta.verbose_name_plural.title() if model else verbose_name
+                model._meta.verbose_name_plural.title()
+                if model
+                else verbose_name
             )
+            # fix common irregulars
+            if verbose_name_plural.lower() == "quarterss":
+                verbose_name_plural = "Quarters"
+            if verbose_name_plural.lower() == "faculty profiles":
+                verbose_name_plural = "Faculty"
             formatted.append(
                 {
                     "table": table,
