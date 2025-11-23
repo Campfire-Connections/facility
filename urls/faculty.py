@@ -21,11 +21,11 @@ urlpatterns = [
     path("dashboard/", DashboardView.as_view(), name="dashboard"),
     # Manage faculty list (restricted to current user's facility)
     path("manage/", ManageView.as_view(), name="manage"),
+    # Create
+    path("new/", CreateView.as_view(), name="new"),
     # Show
     path("<int:pk>", ShowView.as_view(), name="show"),
     path("<slug:faculty_slug>/", ShowView.as_view(), name="show"),
-    # Create
-    path("new/", CreateView.as_view(), name="new"),
     # Update
     path("<int:pk>/update/", UpdateView.as_view(), name="edit"),
     path("<slug:faculty_slug>/update/", UpdateView.as_view(), name="edit"),
