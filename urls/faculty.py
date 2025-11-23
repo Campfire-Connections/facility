@@ -12,7 +12,7 @@ from ..views.faculty import (
     DashboardView,
 )
 
-app_name = "facultys"
+app_name = "faculty"
 
 urlpatterns = [
     # Index
