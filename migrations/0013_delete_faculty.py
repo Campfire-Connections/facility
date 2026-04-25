@@ -6,6 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
+        ("enrollment", "0016_alter_facultyclassenrollment_options_and_more"),
         ("facility", "0012_facultyprofile_slug"),
     ]
 
