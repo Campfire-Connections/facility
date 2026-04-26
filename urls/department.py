@@ -16,7 +16,7 @@ app_name = "departments"
 
 urlpatterns = [
     # Index
-    path("", IndexByFacilityView.as_view(), name="index"),
+    path("", IndexView.as_view(), name="index"),
     # Show
     path("<int:pk>", ShowView.as_view(), name="show"),
     path("<slug:department_slug>", ShowView.as_view(), name="show"),
