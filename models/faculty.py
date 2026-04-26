@@ -72,4 +72,10 @@ class FacultyProfile(BaseUserProfile):
     def get_absolute_url(self):
         from django.urls import reverse
 
-        return reverse("facilities:faculty:show", kwargs={"faculty_slug": self.slug})
+        return reverse(
+            "facilities:faculty:show",
+            kwargs={
+                "facility_slug": self.facility.slug,
+                "faculty_slug": self.slug,
+            },
+        )

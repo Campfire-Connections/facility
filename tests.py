@@ -39,6 +39,24 @@ class FacilityModelTests(BaseDomainTestCase):
             self.parent_org,
         )
 
+    def test_faculty_profile_absolute_url_includes_facility_slug(self):
+        with mute_profile_signals():
+            user = User.objects.create_user(
+                username="faculty.url",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        profile = FacultyProfile.objects.create(
+            user=user,
+            organization=self.organization,
+            facility=self.facility,
+        )
+
+        self.assertEqual(
+            profile.get_absolute_url(),
+            f"/facilities/{self.facility.slug}/faculty/{profile.slug}/",
+        )
+
 
 class FacultyManageViewTests(BaseDomainTestCase):
     def setUp(self):
