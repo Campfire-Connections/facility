@@ -22,20 +22,11 @@ from core.mixins.views import (
 )
 
 from organization.models.organization import Organization
-from enrollment.models.facility import FacilityEnrollment
-from enrollment.tables.facility import FacilityEnrollmentTable
-from course.models.facility_class import FacilityClass
-from course.tables.facility_class import FacilityClassTable
 
 from ..models.facility import Facility
-from ..models.faculty import FacultyProfile
 from ..forms.facility import FacilityForm
 from ..tables.facility import FacilityTable
-from ..models.department import Department
-from ..tables.department import DepartmentTable
-from ..models.quarters import Quarters
-from ..tables.quarters import QuartersTable
-from ..tables.faculty import FacultyTable
+from ..selectors import facility_detail_tables_config, facility_manage_tables_config
 
 from core.dashboard_data import get_facility_metrics, get_facility_overview_text
 
@@ -86,41 +77,7 @@ class ManageView(PortalPermissionMixin, FacilityScopedMixin, BaseManageView):
         raise Http404("Facility not found for user")
 
     def get_tables_config(self):
-        facility = self.get_facility()
-        return {
-            "departments": {
-                "class": DepartmentTable,
-                "queryset": Department.objects.filter(facility=facility),
-                "paginate_by": 6,
-                "context": {"facility_slug": facility.slug},
-            },
-            "quarters": {
-                "class": QuartersTable,
-                "queryset": Quarters.objects.filter(facility=facility),
-                "paginate_by": 6,
-                "context": {"facility_slug": facility.slug},
-            },
-            "faculty": {
-                "class": FacultyTable,
-                "queryset": FacultyProfile.objects.filter(facility=facility).select_related("user"),
-                "paginate_by": 6,
-                "context": {"facility_slug": facility.slug},
-            },
-            "facility_classes": {
-                "class": FacilityClassTable,
-                "queryset": FacilityClass.objects.filter(
-                    facility_enrollment__facility=facility
-                ),
-                "paginate_by": 6,
-                "context": {"facility_slug": facility.slug},
-            },
-            "facility_enrollments": {
-                "class": FacilityEnrollmentTable,
-                "queryset": FacilityEnrollment.objects.filter(facility=facility),
-                "paginate_by": 6,
-                "context": {"facility_slug": facility.slug},
-            },
-        }
+        return facility_manage_tables_config(self.get_facility())
 
     def get_create_url(self, table):
         facility = self.get_facility()
@@ -177,27 +134,7 @@ class ShowView(FacilityScopedMixin, BaseDetailWithTablesView):
     object_slug_kwarg = "facility_slug"  # For BaseSlugOrPkObjectMixin inside BaseDetailWithTablesView
 
     def get_tables_config(self):
-        facility = self.get_object()
-        return {
-            "departments_table": {
-                "class": DepartmentTable,
-                "queryset": Department.objects.filter(facility=facility),
-            },
-            "quarters_table": {
-                "class": QuartersTable,
-                "queryset": Quarters.objects.filter(facility=facility),
-            },
-            "faculty_table": {
-                "class": FacultyTable,
-                "queryset": FacultyProfile.objects.filter(
-                    facility=facility
-                ).select_related("user"),
-            },
-            "facility_enrollment_table": {
-                "class": FacilityEnrollmentTable,
-                "queryset": FacilityEnrollment.objects.filter(facility=facility),
-            },
-        }
+        return facility_detail_tables_config(self.get_object())
 
 
 class CreateView(BaseCreateView):
