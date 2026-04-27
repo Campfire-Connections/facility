@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 
+from core.policies import visible_facilities_for_user
 from course.models.facility_class import FacilityClass
 from course.tables.facility_class import FacilityClassTable
 from enrollment.models.facility import FacilityEnrollment
@@ -14,7 +15,9 @@ from facility.tables.faculty import FacultyTable
 from facility.tables.quarters import QuartersTable
 
 
-def facility_list_queryset():
+def facility_list_queryset(user=None):
+    if user is not None:
+        return visible_facilities_for_user(user)
     return Facility.objects.all()
 
 

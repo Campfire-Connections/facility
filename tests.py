@@ -4,6 +4,7 @@ from datetime import time
 
 from django.test import RequestFactory
 from django.http import Http404
+from django.urls import reverse
 
 from core.tests import BaseDomainTestCase, mute_profile_signals
 from user.models import User
@@ -11,6 +12,8 @@ from .models.faculty import FacultyProfile
 from .models.quarters import Quarters, QuartersType
 from .forms.quarters import QuartersForm
 from .views.faculty import ManageView
+from .selectors import facility_list_queryset
+from .models.facility import Facility
 from facility.models.department import Department
 from enrollment.models.faculty import FacultyEnrollment as FacultyEnrollmentRecord
 from enrollment.models.facility_class import (
@@ -56,6 +59,59 @@ class FacilityModelTests(BaseDomainTestCase):
             profile.get_absolute_url(),
             f"/facilities/{self.facility.slug}/faculty/{profile.slug}/",
         )
+
+
+class FacilityAccessScopeTests(BaseDomainTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.other_org = cls.parent_org.__class__.objects.create(
+            name="Other District",
+            abbreviation="OD",
+            max_depth=5,
+        )
+        cls.other_facility = Facility.objects.create(
+            name="Other Facility",
+            organization=cls.other_org,
+        )
+        with mute_profile_signals():
+            cls.admin_user = User.objects.create_superuser(
+                username="facility.scope.admin",
+                email="facility.scope.admin@example.com",
+                password="pass12345",
+            )
+            cls.faculty_user = User.objects.create_user(
+                username="facility.scope.faculty",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        FacultyProfile.objects.create(
+            user=cls.faculty_user,
+            organization=cls.organization,
+            facility=cls.facility,
+            role=FacultyProfile.FacultyRole.ADMIN,
+        )
+
+    def test_facility_selector_scopes_faculty_to_own_facility(self):
+        facilities = facility_list_queryset(self.faculty_user)
+
+        self.assertQuerySetEqual(facilities, [self.facility], transform=lambda x: x)
+
+    def test_facility_index_scopes_faculty_results(self):
+        self.client.force_login(self.faculty_user)
+        response = self.client.get(reverse("facilities:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.facility.name)
+        self.assertNotContains(response, self.other_facility.name)
+
+    def test_facility_index_keeps_admin_global_visibility(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(reverse("facilities:index"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.facility.name)
+        self.assertContains(response, self.other_facility.name)
 
 
 class FacultyManageViewTests(BaseDomainTestCase):

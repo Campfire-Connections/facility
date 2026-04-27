@@ -26,7 +26,11 @@ from organization.models.organization import Organization
 from ..models.facility import Facility
 from ..forms.facility import FacilityForm
 from ..tables.facility import FacilityTable
-from ..selectors import facility_detail_tables_config, facility_manage_tables_config
+from ..selectors import (
+    facility_detail_tables_config,
+    facility_list_queryset,
+    facility_manage_tables_config,
+)
 
 from core.dashboard_data import get_facility_metrics, get_facility_overview_text
 
@@ -40,6 +44,9 @@ class IndexView(BaseTableListView):
     template_name = "facility/list.html"
     table_class = FacilityTable
     context_object_name = "facilities"
+
+    def get_queryset(self):
+        return facility_list_queryset(self.request.user)
 
 
 class IndexByOrganizationView(OrgScopedMixin, BaseIndexByFilterTableView):
