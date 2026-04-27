@@ -177,6 +177,16 @@ class FacultyManageViewTests(BaseDomainTestCase):
         view.request = request
         self.assertTrue(view.test_func())
 
+    def test_facility_manage_page_renders_create_actions(self):
+        self.client.force_login(self.user)
+        response = self.client.get(
+            reverse("facilities:manage", kwargs={"facility_slug": self.facility.slug})
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "New Department")
+        self.assertContains(response, "New Quarters")
+
     def test_faculty_manage_view_blocks_non_admin(self):
         with mute_profile_signals():
             staff_user = User.objects.create_user(
