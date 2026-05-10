@@ -16,7 +16,7 @@ from core.views.base import (
     BaseDashboardView,
 )
 from core.mixins.views import PortalPermissionMixin, LoginRequiredMixin
-from core.utils import is_faculty_admin
+from core.utils import get_faculty_profile, is_department_admin, is_faculty_admin
 from core.dashboard_data import get_faculty_resources, get_faculty_schedule
 
 from enrollment.tables.faculty_class import ClassScheduleTable
@@ -156,6 +156,44 @@ class ShowView(BaseDetailView):
     model = FacultyProfile
     template_name = "faculty/show.html"
     context_object_name = "faculty"
+    slug_url_kwarg = "faculty_slug"
+
+    def can_view_enrollments(self, faculty):
+        user = self.request.user
+        if not getattr(user, "is_authenticated", False):
+            return False
+        if getattr(user, "is_superuser", False) or faculty.user_id == user.id:
+            return True
+        viewer_profile = get_faculty_profile(user)
+        return bool(
+            viewer_profile
+            and viewer_profile.facility_id
+            and viewer_profile.facility_id == faculty.facility_id
+            and (is_faculty_admin(user) or is_department_admin(user))
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        faculty = self.object
+        can_view_enrollments = self.can_view_enrollments(faculty)
+        enrollments = FacultyEnrollment.objects.none()
+        if can_view_enrollments:
+            enrollments = (
+                FacultyEnrollment.objects.filter(faculty=faculty)
+                .select_related(
+                    "facility_enrollment",
+                    "facility_enrollment__facility",
+                    "quarters",
+                )
+                .prefetch_related("facility_enrollment__facility_classes")
+            )
+        context.update(
+            profile_user=faculty.user,
+            profile_facility=faculty.facility,
+            can_view_enrollments=can_view_enrollments,
+            faculty_enrollments=enrollments,
+        )
+        return context
 
 
 class RegisterFacultyView(BaseFormView):

@@ -46,10 +46,10 @@
         {% block card_body_faculty %}
         <div class="card-body" id="facultyCard">
             <h2 class="no-border card-title section-title">{{organization_labels.faculty_label|title}}</h2>
-            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
-                <span id="facilityFaculty" class="readmore" style="max-height: none;">
+            <div class="field-value object-description">
+                <div id="facilityFaculty" class="readmore table-shell" tabindex="0" aria-label="{{ organization_labels.faculty_label|title }} table">
                     {% render_table faculty_table %}
-                </span>&nbsp;
+                </div>
             </div>
         </div>
         {% endblock card_body_faculty %}
@@ -59,10 +59,10 @@
         {% block card_body_departments %}
         <div class="card-body" id="departmentCard">
             <h2 class="no-border card-title section-title">{{organization_labels.department_label|pluralize_word:True}}</h2>
-            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
-                <span id="facilityDepartments" class="readmore" style="max-height: none;">
+            <div class="field-value object-description">
+                <div id="facilityDepartments" class="readmore table-shell" tabindex="0" aria-label="{{ organization_labels.department_label|pluralize_word:True }} table">
                     {% render_table departments_table %}
-                </span>&nbsp;
+                </div>
             </div>
         </div>
         {% endblock card_body_departments %}
@@ -72,10 +72,10 @@
         {% block card_body_quarters %}
         <div class="card-body" id="QuartersCard">
             <h2 class="no-border card-title section-title">{{organization_labels.quarters_label|title}}</h2>
-            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
-                <span id="facilityEnrollments" class="readmore" style="max-height: none;">
+            <div class="field-value object-description">
+                <div id="facilityQuarters" class="readmore table-shell" tabindex="0" aria-label="{{ organization_labels.quarters_label|title }} table">
                     {% render_table quarters_table %}
-                </span>&nbsp;
+                </div>
             </div>
         </div>
         {% endblock card_body_quarters %}
@@ -85,10 +85,10 @@
         {% block card_body_enrollments %}
         <div class="card-body" id="EnrollmentCard">
             <h2 class="no-border card-title section-title">{{organization_labels.facility_enrollment_label|pluralize_word:True}}</h2>
-            <div id="notes" class="field-value" style="width: 100%; overflow: hidden; word-break: break-word;">
-                <span id="facilityEnrollments" class="readmore" style="max-height: none;">
+            <div class="field-value object-description">
+                <div id="facilityEnrollments" class="readmore table-shell" tabindex="0" aria-label="{{ organization_labels.facility_enrollment_label|pluralize_word:True }} table">
                     {% render_table facility_enrollment_table %}
-                </span>&nbsp;
+                </div>
             </div>
         </div>
         {% endblock card_body_enrollments %}

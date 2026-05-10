@@ -6,37 +6,38 @@
 
 {% block title_text_focus %}{{ facility.name|default:"Facility" }}{% endblock %}
 
-{% block cards %}
-<div id="manage">
-    {{ block.super }}
-    <div class="d-flex justify-content-between align-items-center" style="margin-bottom:16px;">
-        <h2 style="width:100%;">Facility Overview
-        <span class="text-muted justify-content-end">{% if facility_edit_url %}
+{% block manage_header %}
+<section class="manage-section">
+    <div class="manage-section-header">
+        <h2>Facility Overview</h2>
+        {% if facility_edit_url %}
             <a class="btn btn-outline-primary" href="{{ facility_edit_url }}">
-                <i class="fas fa-edit"></i> Edit Facility
+                <i class="fas fa-edit" aria-hidden="true"></i> Edit Facility
             </a>
-        {% endif %}</span>
-    </h2>
+        {% endif %}
     </div>
+</section>
+{% endblock manage_header %}
 
-
-    {% for item in tables_with_names %}
-    <section class="card">
-        <h2 class="d-flex justify-content-between align-items-center gap-2">
-            <span>{{ item.name_plural|default:item.name|title }}</span>
+{% block cards %}
+{% for item in tables_with_names %}
+    <section class="manage-section">
+        <div class="manage-section-header">
+            <h2>{{ item.name_plural|default:item.name|title }}</h2>
             {% if item.create_url and item.create_url != "#" %}
-            <a class="btn btn-sm btn-primary" href="{{ item.create_url }}">
-                {% if item.icon %}
-                    <i class="fas {{ item.icon }}"></i>
-                {% else %}
-                    <i class="fas fa-plus"></i>
-                {% endif %}
-                New {{ item.name|default:"Item"|title }}
-            </a>
+                <a class="btn btn-sm btn-primary" href="{{ item.create_url }}">
+                    {% if item.icon %}
+                        <i class="fas {{ item.icon }}" aria-hidden="true"></i>
+                    {% else %}
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                    {% endif %}
+                    New {{ item.name|default:"Item"|title }}
+                </a>
             {% endif %}
-        </h2>
-        {% render_table item.table %}
+        </div>
+        <div class="table-shell" tabindex="0" aria-label="{{ item.name_plural|default:item.name|title }} table">
+            {% render_table item.table %}
+        </div>
     </section>
-    {% endfor %}
-</div>
+{% endfor %}
 {% endblock cards %}

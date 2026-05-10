@@ -1,16 +1,124 @@
-<!--facility/templates/faculty/show.html-->
 {% extends 'base/show.html' %}
-{% load my_filters %}
-{% load static %}
-{% load render_table from django_tables2 %}
 
-{% block stylesheets_local %}
+{% block title_text %}{{ profile_user.get_full_name|default:profile_user.username|title }}{% endblock title_text %}
+{% block object_identifier %}Faculty{% endblock object_identifier %}
+{% block object_name %}{{ profile_user.get_full_name|default:profile_user.username|title }}{% endblock object_name %}
+{% block object_details %}
+    {% if profile_facility %}
+        {{ profile_facility.name }}{% if faculty.department %} - {{ faculty.department.name }}{% endif %}
+    {% elif faculty.organization %}
+        {{ faculty.organization.name }}
+    {% else %}
+        Profile
+    {% endif %}
+{% endblock object_details %}
+
+{% block object_nav_tabs %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static 'css/table.css' %}">
-{% endblock stylesheets_local %}
+    {% if can_view_enrollments %}
+    <li class="nav-item" role="presentation">
+        <a href="#enrollmentsTab" id="tabs_tabEnrollments" class="nav-link" data-bs-toggle="tab">Enrollments</a>
+    </li>
+    <li class="nav-item" role="presentation">
+        <a href="#classesTab" id="tabs_tabClasses" class="nav-link" data-bs-toggle="tab">Classes</a>
+    </li>
+    {% endif %}
+{% endblock object_nav_tabs %}
 
-{% block title_text %}{{ faculty.name | title }}{% endblock title_text %}
+{% block card_body_wrapper %}
+<div id="overviewTab" class="tab-pane fade show active">
+    {% block card_body_overview %}
+    <div class="card-body" id="overviewCard">
+        <h2 class="no-border card-title section-title">Profile</h2>
+        <dl class="detail-list">
+            <dt>Name</dt>
+            <dd>{{ profile_user.get_full_name|default:profile_user.username|title }}</dd>
+            <dt>Username</dt>
+            <dd>{{ profile_user.username }}</dd>
+            <dt>Email</dt>
+            <dd>{{ profile_user.email|default:"Not provided" }}</dd>
+            <dt>Facility</dt>
+            <dd>{{ profile_facility|default:"Unassigned" }}</dd>
+            <dt>Department</dt>
+            <dd>{{ faculty.department|default:"Unassigned" }}</dd>
+            <dt>Organization</dt>
+            <dd>{{ faculty.organization|default:"Unassigned" }}</dd>
+            <dt>Role</dt>
+            <dd>{{ faculty.get_role_display }}</dd>
+            <dt>Address</dt>
+            <dd>{{ faculty.address|default:"Not provided" }}</dd>
+        </dl>
+    </div>
+    {% endblock card_body_overview %}
+</div>
 
-{% block object_identifier %}{% endblock object_identifier %}
+{% if can_view_enrollments %}
+<div id="enrollmentsTab" class="tab-pane fade">
+    <div class="card-body" id="enrollmentsCard">
+        <h2 class="no-border card-title section-title">Enrollments</h2>
+        {% if faculty_enrollments %}
+        <div class="table-shell" tabindex="0" aria-label="Faculty enrollments table">
+            <table class="table table-striped table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Enrollment</th>
+                        <th scope="col">Facility</th>
+                        <th scope="col">Dates</th>
+                        <th scope="col">Quarters</th>
+                        <th scope="col">Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in faculty_enrollments %}
+                    <tr>
+                        <td>{{ enrollment.facility_enrollment }}</td>
+                        <td>{{ enrollment.facility_enrollment.facility }}</td>
+                        <td>{{ enrollment.start|default:"TBD" }} - {{ enrollment.end|default:"TBD" }}</td>
+                        <td>{{ enrollment.quarters|default:"Unassigned" }}</td>
+                        <td>{{ enrollment.role|default:"Faculty" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="fas fa-calendar-xmark" aria-hidden="true"></span>
+            <p>No faculty enrollments are recorded.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
 
-{% block object_details %}{{ faculty.facultyprofile_profile.facility.organization.get_root_organization | title }}{% endblock object_details %}
+<div id="classesTab" class="tab-pane fade">
+    <div class="card-body" id="classesCard">
+        <h2 class="no-border card-title section-title">Classes</h2>
+        {% if faculty_enrollments %}
+        <div class="content-grid">
+            {% for enrollment in faculty_enrollments %}
+            <section class="content-card">
+                <h3>{{ enrollment.facility_enrollment }}</h3>
+                {% with classes=enrollment.classes %}
+                    {% if classes %}
+                    <ul class="list-group list-group-flush">
+                        {% for assigned_class in classes %}
+                        <li class="list-group-item">{{ assigned_class }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted mb-0">No classes assigned.</p>
+                    {% endif %}
+                {% endwith %}
+            </section>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="fas fa-chalkboard" aria-hidden="true"></span>
+            <p>No classes are available.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock card_body_wrapper %}

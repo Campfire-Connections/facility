@@ -113,6 +113,25 @@ class FacilityAccessScopeTests(BaseDomainTestCase):
         self.assertContains(response, self.facility.name)
         self.assertContains(response, self.other_facility.name)
 
+    def test_faculty_detail_renders_profile_and_enrollment_tabs_for_self(self):
+        self.client.force_login(self.faculty_user)
+        profile = self.faculty_user.facultyprofile_profile
+        response = self.client.get(
+            reverse(
+                "facilities:faculty:show",
+                kwargs={
+                    "facility_slug": self.facility.slug,
+                    "faculty_slug": profile.slug,
+                },
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Faculty")
+        self.assertContains(response, "Profile")
+        self.assertContains(response, "Enrollments")
+        self.assertContains(response, "Classes")
+
 
 class FacultyManageViewTests(BaseDomainTestCase):
     def setUp(self):
