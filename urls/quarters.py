@@ -19,7 +19,11 @@ urlpatterns = [
     path("types/", include('facility.urls.quarters_type', namespace="types")),
     # Index
     path("", IndexView.as_view(), name="index"),
-    path("facility/<slug:facility_slug>/", IndexByFacilityView.as_view(), name="index_by_facility"),
+    path(
+        "facility/<slug:filter_facility_slug>/",
+        IndexByFacilityView.as_view(),
+        name="index_by_facility",
+    ),
     # Show
     path("<int:pk>", ShowView.as_view(), name="show"),
     path("<slug:quarters_slug>", ShowView.as_view(), name="show"),

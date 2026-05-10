@@ -1,6 +1,6 @@
 # facility/urls/faculty.py
 
-from django.urls import path
+from django.urls import path, include
 
 from ..views.faculty import (
     IndexView,
@@ -32,6 +32,8 @@ urlpatterns = [
     # Delete
     path("<int:pk>/delete/", DeleteView.as_view(), name="delete"),
     path("<slug:faculty_slug>/delete/", DeleteView.as_view(), name="delete"),
-    
-    
+    path(
+        "<slug:faculty_slug>/enrollments/",
+        include("enrollment.urls.faculty", namespace="enrollments"),
+    ),
 ]

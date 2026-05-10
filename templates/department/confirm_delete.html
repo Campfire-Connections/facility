@@ -1,2 +1,7 @@
 {% extends "base/confirm_delete.html" %}
 {% block title_text %}Delete Department{% endblock title_text %}
+{% block confirm_title %}Delete Department{% endblock confirm_title %}
+{% block confirm_message %}
+Delete "{{ object }}" and remove it from facility class planning. Classes assigned to this department should be reassigned first.
+{% endblock confirm_message %}
+{% block confirm_button %}Delete Department{% endblock confirm_button %}

@@ -44,7 +44,7 @@ class IndexByFacilityView(BaseIndexByFilterTableView):
     template_name = "quarters/list.html"
     context_object_name = "quarters"
     table_class = QuartersTable
-    lookup_keys = ["facility_slug", "facility_pk"]
+    lookup_keys = ["filter_facility_slug", "facility_slug", "facility_pk"]
     filter_field = "facility"
     filter_model = Facility
     context_object_name_for_filter = "facility"
