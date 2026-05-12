@@ -31,7 +31,7 @@ from enrollment.views.facility import (
     FacultyEnrollmentCreateView,
     FacultyEnrollmentUpdateView,
 )
-from core.utils import is_faculty_admin
+from core.utils import is_department_admin, is_faculty_admin
 from facility.forms.faculty import FacultyForm, PromoteFacultyForm
 
 
@@ -189,9 +189,44 @@ class FacultyManageViewTests(BaseDomainTestCase):
         )
         self.assertFalse(is_faculty_admin(staff_user))
 
+    def test_department_admin_helper_respects_role(self):
+        with mute_profile_signals():
+            department_admin = User.objects.create_user(
+                username="helper.department",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        FacultyProfile.objects.create(
+            user=department_admin,
+            organization=self.organization,
+            facility=self.facility,
+            role=FacultyProfile.FacultyRole.DEPARTMENT_ADMIN,
+        )
+        self.assertTrue(is_department_admin(department_admin))
+        self.assertFalse(is_faculty_admin(department_admin))
+
     def test_faculty_manage_view_allows_facility_admin(self):
         request = self.factory.get("/facilities/manage/")
         request.user = self.user
+        view = ManageView()
+        view.request = request
+        self.assertTrue(view.test_func())
+
+    def test_faculty_manage_view_allows_department_admin(self):
+        with mute_profile_signals():
+            department_admin = User.objects.create_user(
+                username="faculty.department-admin",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        FacultyProfile.objects.create(
+            user=department_admin,
+            organization=self.organization,
+            facility=self.facility,
+            role=FacultyProfile.FacultyRole.DEPARTMENT_ADMIN,
+        )
+        request = self.factory.get("/facilities/manage/")
+        request.user = department_admin
         view = ManageView()
         view.request = request
         self.assertTrue(view.test_func())
@@ -205,6 +240,32 @@ class FacultyManageViewTests(BaseDomainTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "New Department")
         self.assertContains(response, "New Quarters")
+
+    def test_faculty_manage_page_renders_for_department_admin(self):
+        with mute_profile_signals():
+            department_admin = User.objects.create_user(
+                username="faculty.department-page",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        FacultyProfile.objects.create(
+            user=department_admin,
+            organization=self.organization,
+            facility=self.facility,
+            role=FacultyProfile.FacultyRole.DEPARTMENT_ADMIN,
+        )
+        self.client.force_login(department_admin)
+
+        response = self.client.get(
+            reverse(
+                "facilities:faculty:manage",
+                kwargs={"facility_slug": self.facility.slug},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Manage Faculty")
+        self.assertContains(response, "Faculty Enrollment")
 
     def test_faculty_manage_view_blocks_non_admin(self):
         with mute_profile_signals():
@@ -224,6 +285,33 @@ class FacultyManageViewTests(BaseDomainTestCase):
         view = ManageView()
         view.request = request
         self.assertFalse(view.test_func())
+
+    def test_faculty_manage_page_returns_formatted_403_for_staff(self):
+        with mute_profile_signals():
+            staff_user = User.objects.create_user(
+                username="faculty.staff-page",
+                password="pass12345",
+                user_type=User.UserType.FACULTY,
+            )
+        FacultyProfile.objects.create(
+            user=staff_user,
+            organization=self.organization,
+            facility=self.facility,
+            role=FacultyProfile.FacultyRole.STAFF,
+        )
+        self.client.force_login(staff_user)
+
+        response = self.client.get(
+            reverse(
+                "facilities:faculty:manage",
+                kwargs={"facility_slug": self.facility.slug},
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, "errors/403.html")
+        self.assertContains(response, "Access Denied", status_code=403)
+        self.assertContains(response, "Dashboard", status_code=403)
 
     def test_faculty_form_defaults_role_to_staff(self):
         with mute_profile_signals():

@@ -7,7 +7,7 @@
 {% block title_text %}Manage Faculty{% endblock %}
 
 {% block cards %}
-{% for item in tables_with_metadata %}
+{% for item in tables_with_names %}
     <section class="manage-section">
         <div class="manage-section-header">
             <h2>{{ item.name | title }}</h2>
@@ -24,6 +24,13 @@
         </div>
         <div class="table-shell" tabindex="0" aria-label="{{ item.name|title }} table">
             {% render_table item.table %}
+        </div>
+    </section>
+{% empty %}
+    <section class="manage-section">
+        <div class="empty-state">
+            <span class="fas fa-user-tie" aria-hidden="true"></span>
+            <p>No faculty enrollment records are available for this facility.</p>
         </div>
     </section>
 {% endfor %}
